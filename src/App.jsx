@@ -6,6 +6,7 @@ import NoteList from "./components/NoteList";
 import Sidebar from "./components/Sidebar";
 import SortMenu from "./components/SortMenu";
 import TagFilter from "./components/TagFilter";
+import Toast from "./components/Toast";
 import Topbar from "./components/Topbar";
 import {
   ArchiveIcon,
@@ -25,11 +26,16 @@ import {
   deriveTitle,
   filterBySection,
   filterByTags,
+  parseImport,
   pinnedFirst,
   searchNotes,
   sortNotes,
 } from "./utils/noteUtils";
-import { exportNoteAsTxt } from "./utils/fileUtils";
+import {
+  exportNoteAsTxt,
+  exportNotesAsJson,
+  pickJsonFile,
+} from "./utils/fileUtils";
 
 const THEME_KEY = "paperly_theme";
 const VIEW_KEY = "paperly_view";
@@ -65,6 +71,7 @@ const EMPTY_BY_SECTION = {
 };
 
 const NO_CONFIRM = { open: false };
+const NO_TOAST = { open: false };
 
 export default function App() {
   const [theme, setTheme] = useLocalStorage(THEME_KEY, getInitialTheme);
@@ -76,6 +83,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openId, setOpenId] = useState(null);
   const [confirm, setConfirm] = useState(NO_CONFIRM);
+  const [toast, setToast] = useState(NO_TOAST);
 
   const {
     notes,
@@ -89,6 +97,7 @@ export default function App() {
     restoreNote,
     permanentlyDeleteNote,
     emptyTrash,
+    importNotes,
   } = useNotes();
 
   // Reflect theme on the documentElement so all CSS vars flip.
@@ -173,6 +182,11 @@ export default function App() {
   const handleCloseEditor = useCallback(() => setOpenId(null), []);
 
   const closeConfirm = useCallback(() => setConfirm(NO_CONFIRM), []);
+  const closeToast = useCallback(() => setToast(NO_TOAST), []);
+
+  const showToast = useCallback((message, tone = "info") => {
+    setToast({ open: true, message, tone });
+  }, []);
 
   // Permanent-delete confirmation flow — used by both the card and the editor.
   const confirmPermanentDelete = useCallback(
@@ -205,9 +219,12 @@ export default function App() {
       onConfirm: () => {
         emptyTrash();
         closeConfirm();
+        showToast(
+          `Trash emptied — ${trashedCount} ${trashedCount === 1 ? "note" : "notes"} removed.`,
+        );
       },
     });
-  }, [counts, emptyTrash, closeConfirm]);
+  }, [counts, emptyTrash, closeConfirm, showToast]);
 
   // Trash from inside the editor → close editor.
   const handleEditorTrash = useCallback(
@@ -217,6 +234,39 @@ export default function App() {
     },
     [trashNote],
   );
+
+  // Export everything (including archived + trashed) so import is fully round-trippable.
+  const handleExport = useCallback(() => {
+    if (notes.length === 0) {
+      showToast("Nothing to export yet — write a note first.");
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    exportNotesAsJson(notes, `paperly-notes-${stamp}.json`);
+    showToast(
+      `Exported ${notes.length} ${notes.length === 1 ? "note" : "notes"}.`,
+      "success",
+    );
+  }, [notes, showToast]);
+
+  const handleImport = useCallback(async () => {
+    try {
+      const text = await pickJsonFile();
+      if (!text) return; // user cancelled
+      const incoming = parseImport(text);
+      if (incoming.length === 0) {
+        showToast("That file didn't contain any notes.");
+        return;
+      }
+      const added = importNotes(incoming);
+      showToast(
+        `Imported ${added} ${added === 1 ? "note" : "notes"}.`,
+        "success",
+      );
+    } catch (err) {
+      showToast(err?.message || "Couldn't import that file.", "danger");
+    }
+  }, [importNotes, showToast]);
 
   // Global Ctrl/Cmd+N → new note.
   useEffect(() => {
@@ -249,6 +299,8 @@ export default function App() {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           onCreate={handleCreate}
+          onExport={handleExport}
+          onImport={handleImport}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -381,6 +433,13 @@ export default function App() {
         cancelLabel={confirm.cancelLabel}
         onConfirm={confirm.onConfirm}
         onCancel={closeConfirm}
+      />
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        tone={toast.tone}
+        onDismiss={closeToast}
       />
     </div>
   );

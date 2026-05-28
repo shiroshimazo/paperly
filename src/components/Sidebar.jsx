@@ -1,11 +1,13 @@
 import {
   ArchiveIcon,
+  CloseIcon,
+  DownloadIcon,
   NoteIcon,
   PinIcon,
   SparkleIcon,
   StarIcon,
   TrashIcon,
-  CloseIcon,
+  UploadIcon,
 } from "./icons";
 import { SECTIONS } from "../utils/noteUtils";
 
@@ -28,6 +30,8 @@ export default function Sidebar({
   isOpen,
   onClose,
   onCreate,
+  onExport,
+  onImport,
 }) {
   return (
     <>
@@ -55,7 +59,6 @@ export default function Sidebar({
           "lg:static lg:translate-x-0 " +
           (isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0")
         }
-        style={{ "--ease-out-soft": "cubic-bezier(0.22, 1, 0.36, 1)" }}
       >
         {/* Brand */}
         <div className="flex h-14 items-center justify-between px-app-md border-b border-border">
@@ -142,6 +145,35 @@ export default function Sidebar({
                 </li>
               );
             })}
+          </ul>
+
+          {/* Data actions */}
+          <p className="mt-app-md px-app-sm pb-app-sm text-label uppercase tracking-wider text-text-subtle">
+            Data
+          </p>
+          <ul className="space-y-0.5">
+            <li>
+              <button
+                type="button"
+                onClick={onExport}
+                className="group flex w-full items-center gap-3 rounded-md px-app-sm py-2 text-left text-text-muted hover:bg-bg-soft hover:text-text transition-colors duration-150"
+              >
+                <DownloadIcon size={16} className="text-text-subtle group-hover:text-text" />
+                <span className="flex-1 text-[0.92rem] font-medium">Export</span>
+                <span className="text-label text-text-subtle">.json</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={onImport}
+                className="group flex w-full items-center gap-3 rounded-md px-app-sm py-2 text-left text-text-muted hover:bg-bg-soft hover:text-text transition-colors duration-150"
+              >
+                <UploadIcon size={16} className="text-text-subtle group-hover:text-text" />
+                <span className="flex-1 text-[0.92rem] font-medium">Import</span>
+                <span className="text-label text-text-subtle">.json</span>
+              </button>
+            </li>
           </ul>
         </nav>
 
