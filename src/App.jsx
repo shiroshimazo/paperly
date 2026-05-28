@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import EmptyState from "./components/EmptyState";
 import NoteList from "./components/NoteList";
 import Sidebar from "./components/Sidebar";
+import SortMenu from "./components/SortMenu";
+import TagFilter from "./components/TagFilter";
 import Topbar from "./components/Topbar";
 import {
   ArchiveIcon,
@@ -17,7 +19,9 @@ import { useNotes } from "./hooks/useNotes";
 import {
   SECTIONS,
   SORTS,
+  collectTags,
   filterBySection,
+  filterByTags,
   pinnedFirst,
   searchNotes,
   sortNotes,
@@ -25,6 +29,7 @@ import {
 
 const THEME_KEY = "paperly_theme";
 const VIEW_KEY = "paperly_view";
+const SORT_KEY = "paperly_sort";
 
 const EMPTY_BY_SECTION = {
   [SECTIONS.ALL]: {
@@ -58,8 +63,10 @@ const EMPTY_BY_SECTION = {
 export default function App() {
   const [theme, setTheme] = useLocalStorage(THEME_KEY, getInitialTheme);
   const [view, setView] = useLocalStorage(VIEW_KEY, "grid");
+  const [sort, setSort] = useLocalStorage(SORT_KEY, SORTS.UPDATED_DESC);
   const [section, setSection] = useState(SECTIONS.ALL);
   const [query, setQuery] = useState("");
+  const [selectedTags, setSelectedTags] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const {
@@ -97,13 +104,25 @@ export default function App() {
     [notes],
   );
 
-  // Build the visible list: section → search → sort → pinned-first.
+  // Distinct tags across active notes — drives the chip strip.
+  const allTags = useMemo(() => collectTags(notes), [notes]);
+
+  // Reconcile: if a tag is removed (last note retagged), drop it from selection.
+  useEffect(() => {
+    if (selectedTags.length === 0) return;
+    const present = new Set(allTags.map((t) => t.toLowerCase()));
+    const next = selectedTags.filter((t) => present.has(t.toLowerCase()));
+    if (next.length !== selectedTags.length) setSelectedTags(next);
+  }, [allTags, selectedTags]);
+
+  // Build the visible list: section → tags → search → sort → pinned-first.
   const visibleNotes = useMemo(() => {
     const sectioned = filterBySection(notes, section);
-    const searched = searchNotes(sectioned, query);
-    const sorted = sortNotes(searched, SORTS.UPDATED_DESC);
+    const tagged = filterByTags(sectioned, selectedTags);
+    const searched = searchNotes(tagged, query);
+    const sorted = sortNotes(searched, sort);
     return pinnedFirst(sorted, section);
-  }, [notes, section, query]);
+  }, [notes, section, selectedTags, query, sort]);
 
   const visibleCount = visibleNotes.length;
 
@@ -115,7 +134,14 @@ export default function App() {
 
   const handleSectionChange = useCallback((next) => {
     setSection(next);
+    setSelectedTags([]);
     setSidebarOpen(false);
+  }, []);
+
+  const handleTagToggle = useCallback((tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
   }, []);
 
   // Open is wired in Task 6 (NoteEditor). For now, stub it.
@@ -124,7 +150,10 @@ export default function App() {
   }, []);
 
   const sectionEmpty = EMPTY_BY_SECTION[section];
-  const isSearchMiss = visibleCount === 0 && query.trim().length > 0;
+  const hasActiveFilters = query.trim().length > 0 || selectedTags.length > 0;
+  const isFilteredMiss = visibleCount === 0 && hasActiveFilters;
+  const showTagFilter =
+    allTags.length > 0 && section !== SECTIONS.TRASH;
 
   return (
     <div className="min-h-dvh bg-bg text-text font-sans">
@@ -149,10 +178,20 @@ export default function App() {
             onThemeToggle={onThemeToggle}
             onOpenSidebar={() => setSidebarOpen(true)}
             count={visibleCount}
+            rightSlot={<SortMenu value={sort} onChange={setSort} />}
           />
 
           <main className="flex-1 px-app-md py-app-md md:py-app-lg lg:px-app-lg">
-            <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-7xl space-y-app-md">
+              {showTagFilter ? (
+                <TagFilter
+                  tags={allTags}
+                  selected={selectedTags}
+                  onToggle={handleTagToggle}
+                  onClear={() => setSelectedTags([])}
+                />
+              ) : null}
+
               {visibleCount > 0 ? (
                 <NoteList
                   notes={visibleNotes}
@@ -167,11 +206,29 @@ export default function App() {
                   onRestore={restoreNote}
                   onDeleteForever={(note) => permanentlyDeleteNote(note.id)}
                 />
-              ) : isSearchMiss ? (
+              ) : isFilteredMiss ? (
                 <EmptyState
                   icon={SearchIcon}
-                  title={`No matches for “${query.trim()}”`}
-                  description="Try a different word, check your spelling, or clear the search to see all notes in this section."
+                  title="No matching notes"
+                  description={
+                    selectedTags.length > 0 && query.trim()
+                      ? "Try clearing some tags or adjusting your search."
+                      : selectedTags.length > 0
+                        ? "No notes carry all the selected tags in this section."
+                        : `No notes match “${query.trim()}” in this section.`
+                  }
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        setSelectedTags([]);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-md border border-border bg-bg-soft px-app-md py-2 text-label font-medium uppercase tracking-wide text-text-muted hover:text-text hover:border-border-strong transition"
+                    >
+                      Clear filters
+                    </button>
+                  }
                 />
               ) : (
                 <EmptyState

@@ -1,10 +1,9 @@
 import {
   GridIcon,
   ListIcon,
-  SearchIcon,
   SidebarIcon,
-  CloseIcon,
 } from "./icons";
+import SearchBar from "./SearchBar";
 import ThemeToggle from "./ThemeToggle";
 
 const SECTION_TITLES = {
@@ -37,6 +36,7 @@ export default function Topbar({
   onThemeToggle,
   onOpenSidebar,
   count,
+  rightSlot,
 }) {
   return (
     <header
@@ -68,41 +68,16 @@ export default function Topbar({
           </p>
         </div>
 
-        {/* Search — flex-grow, label visually hidden */}
-        <div className="ml-auto flex-1 max-w-xl">
-          <label htmlFor="topbar-search" className="sr-only">
-            Search notes
-          </label>
-          <div className="relative">
-            <SearchIcon
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle"
-            />
-            <input
-              id="topbar-search"
-              type="search"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search by title, content, or tag…"
-              className={
-                "w-full h-9 pl-9 pr-9 rounded-md border border-border " +
-                "bg-bg-soft text-[0.92rem] placeholder:text-text-subtle " +
-                "focus:bg-bg focus:border-border-strong focus:outline-none " +
-                "transition-colors duration-150"
-              }
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => onQueryChange("")}
-                aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-sm text-text-subtle hover:text-text hover:bg-neutral"
-              >
-                <CloseIcon size={14} />
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Search */}
+        <SearchBar
+          id="topbar-search"
+          value={query}
+          onChange={onQueryChange}
+          className="ml-auto flex-1 max-w-xl"
+        />
+
+        {/* Sort + extras supplied by App */}
+        {rightSlot}
 
         {/* View toggle */}
         <div
