@@ -1,4 +1,4 @@
-import { CloseIcon, SearchIcon } from "./icons";
+import { Search, X } from "lucide-react";
 
 /**
  * SearchBar — reusable controlled input with an icon and a clear button.
@@ -16,8 +16,9 @@ export default function SearchBar({
       <label htmlFor={id} className="sr-only">
         Search
       </label>
-      <SearchIcon
+      <Search
         size={16}
+        strokeWidth={1.75}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle pointer-events-none"
       />
       <input
@@ -42,7 +43,7 @@ export default function SearchBar({
           aria-label="Clear search"
           className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-sm text-text-subtle hover:text-text hover:bg-neutral"
         >
-          <CloseIcon size={14} />
+          <X size={14} strokeWidth={1.75} />
         </button>
       ) : null}
     </div>

@@ -1,8 +1,4 @@
-import {
-  GridIcon,
-  ListIcon,
-  SidebarIcon,
-} from "./icons";
+import { LayoutGrid, List as ListIcon, PanelLeft } from "lucide-react";
 import SearchBar from "./SearchBar";
 import ThemeToggle from "./ThemeToggle";
 
@@ -53,7 +49,7 @@ export default function Topbar({
           aria-label="Open sidebar"
           className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:text-text hover:bg-bg-soft"
         >
-          <SidebarIcon size={18} />
+          <PanelLeft size={18} strokeWidth={1.75} />
         </button>
 
         {/* Section title (hidden on small to give search room) */}
@@ -98,7 +94,7 @@ export default function Topbar({
                 : "text-text-muted hover:text-text")
             }
           >
-            <GridIcon size={15} />
+            <LayoutGrid size={15} strokeWidth={1.75} />
           </button>
           <button
             type="button"
@@ -113,7 +109,7 @@ export default function Topbar({
                 : "text-text-muted hover:text-text")
             }
           >
-            <ListIcon size={15} />
+            <ListIcon size={15} strokeWidth={1.75} />
           </button>
         </div>
 

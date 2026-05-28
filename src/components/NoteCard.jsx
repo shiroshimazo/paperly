@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArchiveIcon,
-  MoreIcon,
-  PinFilledIcon,
-  PinIcon,
-  RestoreIcon,
-  StarFilledIcon,
-  StarIcon,
-  TrashIcon,
-} from "./icons";
+  Archive,
+  MoreVertical,
+  Pin,
+  RotateCcw,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { COLOR_LABELS, SECTIONS, derivePreview, deriveTitle } from "../utils/noteUtils";
 import { formatRelative } from "../utils/dateUtils";
 
@@ -41,8 +40,8 @@ export default function NoteCard({
     <article
       className={
         "group relative flex flex-col rounded-lg border border-border bg-card " +
-        "transition-[border-color,transform,box-shadow] duration-150 " +
-        "hover:border-border-strong hover:-translate-y-px " +
+        "transition-[border-color,box-shadow] duration-150 " +
+        "hover:border-border-strong " +
         "focus-within:border-border-strong " +
         (view === "list" ? "p-app-md md:flex-row md:items-start md:gap-app-md" : "p-app-md")
       }
@@ -72,8 +71,10 @@ export default function NoteCard({
             {title}
           </h3>
           {note.isPinned && !inTrash ? (
-            <PinFilledIcon
+            <Pin
               size={14}
+              strokeWidth={1.75}
+              fill="currentColor"
               className="mt-1 shrink-0 text-text"
               aria-label="Pinned"
             />
@@ -191,7 +192,7 @@ function CardToolbar({
             onRestore?.(note.id);
           }}
         >
-          <RestoreIcon size={15} />
+          <RotateCcw size={15} strokeWidth={1.75} />
         </IconButton>
         <IconButton
           label="Delete forever"
@@ -201,7 +202,7 @@ function CardToolbar({
             onDeleteForever?.(note);
           }}
         >
-          <TrashIcon size={15} />
+          <Trash2 size={15} strokeWidth={1.75} />
         </IconButton>
       </div>
     );
@@ -217,7 +218,11 @@ function CardToolbar({
           onTogglePin?.(note.id);
         }}
       >
-        {note.isPinned ? <PinFilledIcon size={15} /> : <PinIcon size={15} />}
+        <Pin
+          size={15}
+          strokeWidth={1.75}
+          fill={note.isPinned ? "currentColor" : "none"}
+        />
       </IconButton>
       <IconButton
         label={note.isFavorite ? "Unfavorite" : "Favorite"}
@@ -227,7 +232,11 @@ function CardToolbar({
           onToggleFavorite?.(note.id);
         }}
       >
-        {note.isFavorite ? <StarFilledIcon size={15} /> : <StarIcon size={15} />}
+        <Star
+          size={15}
+          strokeWidth={1.75}
+          fill={note.isFavorite ? "currentColor" : "none"}
+        />
       </IconButton>
 
       <IconButton
@@ -239,53 +248,58 @@ function CardToolbar({
           setMenuOpen((v) => !v);
         }}
       >
-        <MoreIcon size={15} />
+        <MoreVertical size={15} strokeWidth={1.75} />
       </IconButton>
 
-      {menuOpen ? (
-        <div
-          role="menu"
-          className={
-            "absolute right-0 top-full mt-1.5 z-10 w-44 rounded-md border border-border " +
-            "bg-card shadow-lg shadow-black/5 dark:shadow-black/30 " +
-            "py-1 text-[0.88rem] " +
-            "origin-top-right animate-[fadeIn_120ms_ease-out]"
-          }
-          onClick={(e) => e.stopPropagation()}
-        >
-          {inArchive ? (
-            <MenuItem
-              onSelect={() => {
-                setMenuOpen(false);
-                onUnarchive?.(note.id);
-              }}
-            >
-              <RestoreIcon size={14} />
-              Move to All Notes
-            </MenuItem>
-          ) : (
-            <MenuItem
-              onSelect={() => {
-                setMenuOpen(false);
-                onArchive?.(note.id);
-              }}
-            >
-              <ArchiveIcon size={14} />
-              Archive
-            </MenuItem>
-          )}
-          <MenuItem
-            tone="danger"
-            onSelect={() => {
-              setMenuOpen(false);
-              onTrash?.(note.id);
-            }}
+      <AnimatePresence>
+        {menuOpen ? (
+          <motion.div
+            role="menu"
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -2, scale: 0.98 }}
+            transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+            className={
+              "absolute right-0 top-full mt-1.5 z-10 w-44 rounded-md border border-border " +
+              "bg-card shadow-lg shadow-black/5 dark:shadow-black/30 " +
+              "py-1 text-[0.88rem] origin-top-right"
+            }
+            onClick={(e) => e.stopPropagation()}
           >
-            <TrashIcon size={14} />
-            Move to Trash
-          </MenuItem>
-        </div>
-      ) : null}
+            {inArchive ? (
+              <MenuItem
+                onSelect={() => {
+                  setMenuOpen(false);
+                  onUnarchive?.(note.id);
+                }}
+              >
+                <RotateCcw size={14} strokeWidth={1.75} />
+                Move to All Notes
+              </MenuItem>
+            ) : (
+              <MenuItem
+                onSelect={() => {
+                  setMenuOpen(false);
+                  onArchive?.(note.id);
+                }}
+              >
+                <Archive size={14} strokeWidth={1.75} />
+                Archive
+              </MenuItem>
+            )}
+            <MenuItem
+              tone="danger"
+              onSelect={() => {
+                setMenuOpen(false);
+                onTrash?.(note.id);
+              }}
+            >
+              <Trash2 size={14} strokeWidth={1.75} />
+              Move to Trash
+            </MenuItem>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
@@ -324,7 +338,7 @@ function MenuItem({ tone, onSelect, children }) {
         (tone === "danger" ? "text-text" : "text-text")
       }
     >
-      <span className="text-text-muted">{children}</span>
+      <span className="text-text-muted inline-flex items-center gap-2">{children}</span>
     </button>
   );
 }

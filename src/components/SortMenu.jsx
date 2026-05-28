@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDownIcon } from "./icons";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 import { SORTS } from "../utils/noteUtils";
 
 const OPTIONS = [
@@ -54,49 +55,58 @@ export default function SortMenu({ value, onChange }) {
       >
         <span className="hidden sm:inline text-text-subtle">Sort</span>
         <span className="text-text">{current}</span>
-        <ChevronDownIcon
-          size={14}
-          className={"text-text-subtle transition-transform " + (open ? "rotate-180" : "")}
-        />
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="inline-flex text-text-subtle"
+        >
+          <ChevronDown size={14} strokeWidth={1.75} />
+        </motion.span>
       </button>
 
-      {open ? (
-        <ul
-          role="listbox"
-          aria-label="Sort by"
-          className={
-            "absolute right-0 top-full mt-1.5 z-10 w-52 overflow-hidden rounded-md border border-border " +
-            "bg-card shadow-lg shadow-black/5 dark:shadow-black/30 py-1 text-[0.88rem]"
-          }
-        >
-          {OPTIONS.map((opt) => {
-            const selected = opt.id === value;
-            return (
-              <li key={opt.id} role="option" aria-selected={selected}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.id);
-                    setOpen(false);
-                  }}
-                  className={
-                    "flex w-full items-center justify-between px-app-sm py-1.5 text-left " +
-                    "hover:bg-bg-soft " +
-                    (selected ? "text-text font-medium" : "text-text-muted")
-                  }
-                >
-                  <span>{opt.label}</span>
-                  {selected ? (
-                    <span aria-hidden="true" className="text-text">
-                      ✓
-                    </span>
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      <AnimatePresence>
+        {open ? (
+          <motion.ul
+            role="listbox"
+            aria-label="Sort by"
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -2, scale: 0.98 }}
+            transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+            className={
+              "absolute right-0 top-full mt-1.5 z-10 w-52 overflow-hidden rounded-md border border-border " +
+              "bg-card shadow-lg shadow-black/5 dark:shadow-black/30 py-1 text-[0.88rem] origin-top-right"
+            }
+          >
+            {OPTIONS.map((opt) => {
+              const selected = opt.id === value;
+              return (
+                <li key={opt.id} role="option" aria-selected={selected}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.id);
+                      setOpen(false);
+                    }}
+                    className={
+                      "flex w-full items-center justify-between px-app-sm py-1.5 text-left " +
+                      "hover:bg-bg-soft " +
+                      (selected ? "text-text font-medium" : "text-text-muted")
+                    }
+                  >
+                    <span>{opt.label}</span>
+                    {selected ? (
+                      <span aria-hidden="true" className="text-text">
+                        ✓
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </motion.ul>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

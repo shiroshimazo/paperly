@@ -1,4 +1,4 @@
-import { TagIcon, CloseIcon } from "./icons";
+import { Tag, X } from "lucide-react";
 
 /**
  * TagFilter — horizontal chip strip of all distinct tags. Clicking a chip
@@ -15,7 +15,7 @@ export default function TagFilter({ tags, selected = [], onToggle, onClear }) {
         className="hidden sm:inline-flex shrink-0 items-center gap-1.5 pt-1.5 text-label uppercase tracking-wider text-text-subtle"
         aria-hidden="true"
       >
-        <TagIcon size={13} />
+        <Tag size={13} strokeWidth={1.75} />
         Tags
       </span>
 
@@ -50,7 +50,7 @@ export default function TagFilter({ tags, selected = [], onToggle, onClear }) {
               onClick={onClear}
               className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-[12px] font-medium text-text-subtle hover:text-text"
             >
-              <CloseIcon size={12} />
+              <X size={12} strokeWidth={1.75} />
               Clear
             </button>
           </li>

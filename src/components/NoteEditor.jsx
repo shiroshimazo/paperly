@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
-  ArchiveIcon,
-  ArrowLeftIcon,
-  CloseIcon,
-  DownloadIcon,
-  PinFilledIcon,
-  PinIcon,
-  RestoreIcon,
-  StarFilledIcon,
-  StarIcon,
-  TagIcon,
-  TrashIcon,
-  SparkleIcon,
-} from "./icons";
+  Archive,
+  ArrowLeft,
+  Download,
+  Pin,
+  RotateCcw,
+  Sparkles,
+  Star,
+  Tag,
+  Trash2,
+  X,
+} from "lucide-react";
 import { COLOR_LABELS, countText, deriveTitle, slugify } from "../utils/noteUtils";
 import { formatDateTime, formatRelative } from "../utils/dateUtils";
 import { renderMarkdown } from "../utils/markdown";
@@ -137,7 +136,11 @@ export default function NoteEditor({
   }
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.985 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.99 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="fixed inset-0 z-40 flex flex-col bg-bg"
       role="dialog"
       aria-label="Note editor"
@@ -150,7 +153,7 @@ export default function NoteEditor({
           aria-label="Back to notes"
           className="inline-flex h-9 items-center gap-1.5 rounded-md px-app-sm text-text-muted hover:text-text hover:bg-bg-soft transition-colors"
         >
-          <ArrowLeftIcon size={16} />
+          <ArrowLeft size={16} strokeWidth={1.75} />
           <span className="hidden sm:inline text-[0.88rem]">Back</span>
         </button>
 
@@ -168,7 +171,7 @@ export default function NoteEditor({
                 pressed={showPreview}
                 onClick={() => setShowPreview((v) => !v)}
               >
-                <SparkleIcon size={16} />
+                <Sparkles size={16} strokeWidth={1.75} />
                 <span className="hidden md:inline text-[0.85rem]">
                   {showPreview ? "Edit" : "Preview"}
                 </span>
@@ -179,18 +182,22 @@ export default function NoteEditor({
                 pressed={note.isPinned}
                 onClick={() => onTogglePin?.(note.id)}
               >
-                {note.isPinned ? <PinFilledIcon size={16} /> : <PinIcon size={16} />}
+                <Pin
+                  size={16}
+                  strokeWidth={1.75}
+                  fill={note.isPinned ? "currentColor" : "none"}
+                />
               </ToolbarButton>
               <ToolbarButton
                 label={note.isFavorite ? "Unfavorite" : "Favorite"}
                 pressed={note.isFavorite}
                 onClick={() => onToggleFavorite?.(note.id)}
               >
-                {note.isFavorite ? (
-                  <StarFilledIcon size={16} />
-                ) : (
-                  <StarIcon size={16} />
-                )}
+                <Star
+                  size={16}
+                  strokeWidth={1.75}
+                  fill={note.isFavorite ? "currentColor" : "none"}
+                />
               </ToolbarButton>
 
               {inArchive ? (
@@ -198,39 +205,39 @@ export default function NoteEditor({
                   label="Move to All Notes"
                   onClick={() => onUnarchive?.(note.id)}
                 >
-                  <RestoreIcon size={16} />
+                  <RotateCcw size={16} strokeWidth={1.75} />
                 </ToolbarButton>
               ) : (
                 <ToolbarButton
                   label="Archive note"
                   onClick={() => onArchive?.(note.id)}
                 >
-                  <ArchiveIcon size={16} />
+                  <Archive size={16} strokeWidth={1.75} />
                 </ToolbarButton>
               )}
 
               <ToolbarButton label="Export as .txt" onClick={() => onExportTxt?.(note)}>
-                <DownloadIcon size={16} />
+                <Download size={16} strokeWidth={1.75} />
               </ToolbarButton>
 
               <ToolbarButton
                 label="Move to Trash"
                 onClick={() => onTrash?.(note)}
               >
-                <TrashIcon size={16} />
+                <Trash2 size={16} strokeWidth={1.75} />
               </ToolbarButton>
             </>
           ) : (
             <>
               <ToolbarButton label="Restore" onClick={() => onRestore?.(note.id)}>
-                <RestoreIcon size={16} />
+                <RotateCcw size={16} strokeWidth={1.75} />
                 <span className="hidden md:inline text-[0.85rem]">Restore</span>
               </ToolbarButton>
               <ToolbarButton
                 label="Delete forever"
                 onClick={() => onDeleteForever?.(note)}
               >
-                <TrashIcon size={16} />
+                <Trash2 size={16} strokeWidth={1.75} />
                 <span className="hidden md:inline text-[0.85rem]">Delete</span>
               </ToolbarButton>
             </>
@@ -294,7 +301,7 @@ export default function NoteEditor({
                       }
                     >
                       {isNone ? (
-                        <CloseIcon size={11} className="text-text-subtle" />
+                        <X size={11} strokeWidth={1.75} className="text-text-subtle" />
                       ) : (
                         <span
                           aria-hidden="true"
@@ -313,7 +320,7 @@ export default function NoteEditor({
           {!inTrash ? (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="inline-flex items-center gap-1 pr-1 text-label uppercase tracking-wider text-text-subtle">
-                <TagIcon size={12} />
+                <Tag size={12} strokeWidth={1.75} />
                 Tags
               </span>
               {tags.map((t) => (
@@ -329,7 +336,7 @@ export default function NoteEditor({
                     aria-label={`Remove tag ${t}`}
                     className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-sm text-text-subtle hover:text-text hover:bg-neutral"
                   >
-                    <CloseIcon size={11} />
+                    <X size={11} strokeWidth={1.75} />
                   </button>
                 </span>
               ))}
@@ -377,7 +384,7 @@ export default function NoteEditor({
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

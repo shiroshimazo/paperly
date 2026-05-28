@@ -1,4 +1,5 @@
-import { NoteIcon } from "./icons";
+import { motion } from "framer-motion";
+import { FileText } from "lucide-react";
 
 /**
  * EmptyState — used in every section when no notes match the current view.
@@ -7,11 +8,14 @@ import { NoteIcon } from "./icons";
 export default function EmptyState({
   title = "Nothing here yet",
   description = "When you add your first note, it will show up here.",
-  icon: Icon = NoteIcon,
+  icon: Icon = FileText,
   action,
 }) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       className={
         "flex flex-col items-center justify-center text-center " +
         "rounded-lg border border-dashed border-border-strong bg-bg-soft " +
@@ -22,7 +26,7 @@ export default function EmptyState({
         aria-hidden="true"
         className="mb-app-md inline-flex h-12 w-12 items-center justify-center rounded-md border border-border bg-card text-text"
       >
-        <Icon size={22} />
+        <Icon size={22} strokeWidth={1.75} />
       </div>
       <h2 className="text-[1.1rem] font-semibold tracking-tight text-text">
         {title}
@@ -31,6 +35,6 @@ export default function EmptyState({
         {description}
       </p>
       {action ? <div className="mt-app-md">{action}</div> : null}
-    </div>
+    </motion.div>
   );
 }

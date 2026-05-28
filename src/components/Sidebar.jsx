@@ -1,22 +1,23 @@
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArchiveIcon,
-  CloseIcon,
-  DownloadIcon,
-  NoteIcon,
-  PinIcon,
-  SparkleIcon,
-  StarIcon,
-  TrashIcon,
-  UploadIcon,
-} from "./icons";
+  Archive,
+  Download,
+  FileText,
+  Pin,
+  Sparkles,
+  Star,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { SECTIONS } from "../utils/noteUtils";
 
 const NAV = [
-  { id: SECTIONS.ALL, label: "All Notes", Icon: NoteIcon },
-  { id: SECTIONS.PINNED, label: "Pinned", Icon: PinIcon },
-  { id: SECTIONS.FAVORITES, label: "Favorites", Icon: StarIcon },
-  { id: SECTIONS.ARCHIVED, label: "Archived", Icon: ArchiveIcon },
-  { id: SECTIONS.TRASH, label: "Trash", Icon: TrashIcon },
+  { id: SECTIONS.ALL, label: "All Notes", Icon: FileText },
+  { id: SECTIONS.PINNED, label: "Pinned", Icon: Pin },
+  { id: SECTIONS.FAVORITES, label: "Favorites", Icon: Star },
+  { id: SECTIONS.ARCHIVED, label: "Archived", Icon: Archive },
+  { id: SECTIONS.TRASH, label: "Trash", Icon: Trash2 },
 ];
 
 /**
@@ -36,19 +37,21 @@ export default function Sidebar({
   return (
     <>
       {/* Mobile scrim */}
-      <button
-        type="button"
-        aria-hidden={!isOpen}
-        tabIndex={-1}
-        onClick={onClose}
-        className={
-          "fixed inset-0 z-30 bg-overlay backdrop-blur-[2px] " +
-          "transition-opacity duration-200 lg:hidden " +
-          (isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none")
-        }
-      />
+      <AnimatePresence>
+        {isOpen ? (
+          <motion.button
+            type="button"
+            aria-hidden="true"
+            tabIndex={-1}
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="fixed inset-0 z-30 bg-overlay backdrop-blur-[2px] lg:hidden"
+          />
+        ) : null}
+      </AnimatePresence>
 
       <aside
         aria-label="Primary"
@@ -64,7 +67,7 @@ export default function Sidebar({
         <div className="flex h-14 items-center justify-between px-app-md border-b border-border">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-text text-bg">
-              <SparkleIcon size={14} />
+              <Sparkles size={14} strokeWidth={1.75} />
             </div>
             <span className="font-semibold tracking-tight text-text">
               Paperly
@@ -76,20 +79,22 @@ export default function Sidebar({
             aria-label="Close sidebar"
             className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:text-text hover:bg-bg-soft"
           >
-            <CloseIcon size={18} />
+            <X size={18} strokeWidth={1.75} />
           </button>
         </div>
 
         {/* New note CTA */}
         <div className="px-app-md pt-app-md">
-          <button
+          <motion.button
             type="button"
             onClick={onCreate}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.12 }}
             className={
               "w-full inline-flex items-center justify-center gap-2 " +
               "rounded-md bg-text text-bg px-app-md py-2.5 " +
               "text-label font-medium uppercase tracking-wide " +
-              "hover:opacity-90 active:scale-[0.99] transition " +
+              "hover:opacity-90 transition " +
               "shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
             }
           >
@@ -98,7 +103,7 @@ export default function Sidebar({
             <kbd className="ml-1 hidden sm:inline-flex items-center rounded-sm bg-bg/15 px-1.5 py-0.5 text-[10px] font-medium tracking-normal">
               Ctrl N
             </kbd>
-          </button>
+          </motion.button>
         </div>
 
         {/* Sections */}
@@ -126,6 +131,7 @@ export default function Sidebar({
                   >
                     <Icon
                       size={16}
+                      strokeWidth={1.75}
                       className={active ? "" : "text-text-subtle group-hover:text-text"}
                     />
                     <span className="flex-1 text-[0.92rem] font-medium">
@@ -158,7 +164,7 @@ export default function Sidebar({
                 onClick={onExport}
                 className="group flex w-full items-center gap-3 rounded-md px-app-sm py-2 text-left text-text-muted hover:bg-bg-soft hover:text-text transition-colors duration-150"
               >
-                <DownloadIcon size={16} className="text-text-subtle group-hover:text-text" />
+                <Download size={16} strokeWidth={1.75} className="text-text-subtle group-hover:text-text" />
                 <span className="flex-1 text-[0.92rem] font-medium">Export</span>
                 <span className="text-label text-text-subtle">.json</span>
               </button>
@@ -169,7 +175,7 @@ export default function Sidebar({
                 onClick={onImport}
                 className="group flex w-full items-center gap-3 rounded-md px-app-sm py-2 text-left text-text-muted hover:bg-bg-soft hover:text-text transition-colors duration-150"
               >
-                <UploadIcon size={16} className="text-text-subtle group-hover:text-text" />
+                <Upload size={16} strokeWidth={1.75} className="text-text-subtle group-hover:text-text" />
                 <span className="flex-1 text-[0.92rem] font-medium">Import</span>
                 <span className="text-label text-text-subtle">.json</span>
               </button>

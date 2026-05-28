@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { CloseIcon } from "./icons";
+import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 
 /**
  * Toast — minimal status banner. Auto-dismisses after `duration` ms.
@@ -20,8 +21,6 @@ export default function Toast({
     return () => clearTimeout(id);
   }, [open, duration, onDismiss]);
 
-  if (!open) return null;
-
   const accent =
     tone === "danger"
       ? "var(--color-label-rose)"
@@ -30,32 +29,40 @@ export default function Toast({
         : "var(--color-text)";
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className={
-        "fixed bottom-app-md left-1/2 z-50 -translate-x-1/2 " +
-        "min-w-[260px] max-w-[420px] " +
-        "rounded-md border border-border bg-card " +
-        "shadow-lg shadow-black/10 dark:shadow-black/40 " +
-        "animate-[scaleIn_140ms_var(--ease-out-soft,cubic-bezier(0.22,1,0.36,1))] " +
-        "flex items-center gap-app-sm py-2 pl-3 pr-2"
-      }
-    >
-      <span
-        aria-hidden="true"
-        className="h-5 w-[3px] shrink-0 rounded-sm"
-        style={{ backgroundColor: accent }}
-      />
-      <p className="flex-1 text-[0.9rem] leading-snug text-text">{message}</p>
-      <button
-        type="button"
-        onClick={onDismiss}
-        aria-label="Dismiss"
-        className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-text-subtle hover:text-text hover:bg-bg-soft"
-      >
-        <CloseIcon size={14} />
-      </button>
-    </div>
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          key="toast"
+          role="status"
+          aria-live="polite"
+          initial={{ opacity: 0, y: 16, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 12, scale: 0.98 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          className={
+            "fixed bottom-app-md left-1/2 z-50 -translate-x-1/2 " +
+            "min-w-[260px] max-w-[420px] " +
+            "rounded-md border border-border bg-card " +
+            "shadow-lg shadow-black/10 dark:shadow-black/40 " +
+            "flex items-center gap-app-sm py-2 pl-3 pr-2"
+          }
+        >
+          <span
+            aria-hidden="true"
+            className="h-5 w-[3px] shrink-0 rounded-sm"
+            style={{ backgroundColor: accent }}
+          />
+          <p className="flex-1 text-[0.9rem] leading-snug text-text">{message}</p>
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Dismiss"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-text-subtle hover:text-text hover:bg-bg-soft"
+          >
+            <X size={14} strokeWidth={1.75} />
+          </button>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

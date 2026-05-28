@@ -1,4 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import {
+  Archive,
+  FileText,
+  Pin,
+  Plus,
+  Search,
+  Star,
+  Trash2,
+} from "lucide-react";
 import ConfirmModal from "./components/ConfirmModal";
 import EmptyState from "./components/EmptyState";
 import NoteEditor from "./components/NoteEditor";
@@ -8,15 +18,6 @@ import SortMenu from "./components/SortMenu";
 import TagFilter from "./components/TagFilter";
 import Toast from "./components/Toast";
 import Topbar from "./components/Topbar";
-import {
-  ArchiveIcon,
-  NoteIcon,
-  PinIcon,
-  PlusIcon,
-  SearchIcon,
-  StarIcon,
-  TrashIcon,
-} from "./components/icons";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useNotes } from "./hooks/useNotes";
 import {
@@ -43,28 +44,28 @@ const SORT_KEY = "paperly_sort";
 
 const EMPTY_BY_SECTION = {
   [SECTIONS.ALL]: {
-    icon: NoteIcon,
+    icon: FileText,
     title: "Your notebook is empty",
     description:
       "Capture an idea, a list, or a plan. Everything stays on this device — no signup, no cloud.",
   },
   [SECTIONS.PINNED]: {
-    icon: PinIcon,
+    icon: Pin,
     title: "No pinned notes",
     description: "Pin a note from its card or editor to keep it at the top of your list.",
   },
   [SECTIONS.FAVORITES]: {
-    icon: StarIcon,
+    icon: Star,
     title: "No favorites yet",
     description: "Star the notes you keep coming back to — they'll all live here.",
   },
   [SECTIONS.ARCHIVED]: {
-    icon: ArchiveIcon,
+    icon: Archive,
     title: "Nothing archived",
     description: "Archived notes are out of sight in All Notes but never lost.",
   },
   [SECTIONS.TRASH]: {
-    icon: TrashIcon,
+    icon: Trash2,
     title: "Trash is empty",
     description: "Deleted notes appear here first so you can restore them.",
   },
@@ -337,7 +338,7 @@ export default function App() {
                     onClick={confirmEmptyTrash}
                     className="inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-soft px-app-sm py-1.5 text-label uppercase tracking-wide font-medium text-text-muted hover:text-text hover:border-border-strong transition-colors"
                   >
-                    <TrashIcon size={14} />
+                    <Trash2 size={14} strokeWidth={1.75} />
                     Empty Trash
                   </button>
                 ) : null}
@@ -359,7 +360,7 @@ export default function App() {
                 />
               ) : isFilteredMiss ? (
                 <EmptyState
-                  icon={SearchIcon}
+                  icon={Search}
                   title="No matching notes"
                   description={
                     selectedTags.length > 0 && query.trim()
@@ -397,7 +398,7 @@ export default function App() {
                           "hover:opacity-90 active:scale-[0.99] transition"
                         }
                       >
-                        <PlusIcon size={14} />
+                        <Plus size={14} strokeWidth={1.75} />
                         New note
                       </button>
                     ) : null
@@ -409,21 +410,24 @@ export default function App() {
         </div>
       </div>
 
-      {openNote ? (
-        <NoteEditor
-          note={openNote}
-          onChange={updateNote}
-          onClose={handleCloseEditor}
-          onTogglePin={togglePin}
-          onToggleFavorite={toggleFavorite}
-          onArchive={archiveNote}
-          onUnarchive={unarchiveNote}
-          onTrash={handleEditorTrash}
-          onRestore={restoreNote}
-          onDeleteForever={confirmPermanentDelete}
-          onExportTxt={exportNoteAsTxt}
-        />
-      ) : null}
+      <AnimatePresence>
+        {openNote ? (
+          <NoteEditor
+            key={openNote.id}
+            note={openNote}
+            onChange={updateNote}
+            onClose={handleCloseEditor}
+            onTogglePin={togglePin}
+            onToggleFavorite={toggleFavorite}
+            onArchive={archiveNote}
+            onUnarchive={unarchiveNote}
+            onTrash={handleEditorTrash}
+            onRestore={restoreNote}
+            onDeleteForever={confirmPermanentDelete}
+            onExportTxt={exportNoteAsTxt}
+          />
+        ) : null}
+      </AnimatePresence>
 
       <ConfirmModal
         open={confirm.open}
