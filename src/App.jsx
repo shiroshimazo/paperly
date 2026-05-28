@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import ConfirmModal from "./components/ConfirmModal";
 import EmptyState from "./components/EmptyState";
 import NoteEditor from "./components/NoteEditor";
 import NoteList from "./components/NoteList";
@@ -21,6 +22,7 @@ import {
   SECTIONS,
   SORTS,
   collectTags,
+  deriveTitle,
   filterBySection,
   filterByTags,
   pinnedFirst,
@@ -62,6 +64,8 @@ const EMPTY_BY_SECTION = {
   },
 };
 
+const NO_CONFIRM = { open: false };
+
 export default function App() {
   const [theme, setTheme] = useLocalStorage(THEME_KEY, getInitialTheme);
   const [view, setView] = useLocalStorage(VIEW_KEY, "grid");
@@ -71,6 +75,7 @@ export default function App() {
   const [selectedTags, setSelectedTags] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [confirm, setConfirm] = useState(NO_CONFIRM);
 
   const {
     notes,
@@ -83,6 +88,7 @@ export default function App() {
     trashNote,
     restoreNote,
     permanentlyDeleteNote,
+    emptyTrash,
   } = useNotes();
 
   // Reflect theme on the documentElement so all CSS vars flip.
@@ -166,6 +172,43 @@ export default function App() {
 
   const handleCloseEditor = useCallback(() => setOpenId(null), []);
 
+  const closeConfirm = useCallback(() => setConfirm(NO_CONFIRM), []);
+
+  // Permanent-delete confirmation flow — used by both the card and the editor.
+  const confirmPermanentDelete = useCallback(
+    (note) => {
+      const title = deriveTitle(note);
+      setConfirm({
+        open: true,
+        title: "Delete this note forever?",
+        description: `“${title}” will be removed from this device. This can't be undone.`,
+        confirmLabel: "Delete forever",
+        cancelLabel: "Keep",
+        onConfirm: () => {
+          permanentlyDeleteNote(note.id);
+          if (openId === note.id) setOpenId(null);
+          closeConfirm();
+        },
+      });
+    },
+    [permanentlyDeleteNote, openId, closeConfirm],
+  );
+
+  const confirmEmptyTrash = useCallback(() => {
+    const trashedCount = counts[SECTIONS.TRASH] || 0;
+    setConfirm({
+      open: true,
+      title: "Empty Trash?",
+      description: `${trashedCount} ${trashedCount === 1 ? "note" : "notes"} will be permanently deleted from this device. This can't be undone.`,
+      confirmLabel: "Empty Trash",
+      cancelLabel: "Keep",
+      onConfirm: () => {
+        emptyTrash();
+        closeConfirm();
+      },
+    });
+  }, [counts, emptyTrash, closeConfirm]);
+
   // Trash from inside the editor → close editor.
   const handleEditorTrash = useCallback(
     (note) => {
@@ -175,25 +218,12 @@ export default function App() {
     [trashNote],
   );
 
-  // Hard delete from editor → close.
-  const handleEditorDeleteForever = useCallback(
-    (note) => {
-      permanentlyDeleteNote(note.id);
-      setOpenId(null);
-    },
-    [permanentlyDeleteNote],
-  );
-
-  // Global Ctrl/Cmd+N → new note. We don't preventDefault unless we own
-  // the result, since the browser may reserve Ctrl+N for new windows;
-  // we register it but only act when the editor isn't capturing input.
+  // Global Ctrl/Cmd+N → new note.
   useEffect(() => {
     function onKey(e) {
       const meta = e.ctrlKey || e.metaKey;
       if (!meta) return;
       if (e.key.toLowerCase() === "n" && !e.shiftKey && !e.altKey) {
-        // Browser captures Ctrl+N at the chrome level on most platforms,
-        // so we also bind Ctrl+Alt+N as a guaranteed shortcut.
         e.preventDefault();
         handleCreate();
       }
@@ -206,6 +236,8 @@ export default function App() {
   const hasActiveFilters = query.trim().length > 0 || selectedTags.length > 0;
   const isFilteredMiss = visibleCount === 0 && hasActiveFilters;
   const showTagFilter = allTags.length > 0 && section !== SECTIONS.TRASH;
+  const trashCount = counts[SECTIONS.TRASH] || 0;
+  const showEmptyTrash = section === SECTIONS.TRASH && trashCount > 0;
 
   return (
     <div className="min-h-dvh bg-bg text-text font-sans">
@@ -235,14 +267,29 @@ export default function App() {
 
           <main className="flex-1 px-app-md py-app-md md:py-app-lg lg:px-app-lg">
             <div className="mx-auto max-w-7xl space-y-app-md">
-              {showTagFilter ? (
-                <TagFilter
-                  tags={allTags}
-                  selected={selectedTags}
-                  onToggle={handleTagToggle}
-                  onClear={() => setSelectedTags([])}
-                />
-              ) : null}
+              <div className="flex flex-wrap items-center justify-between gap-app-sm">
+                {showTagFilter ? (
+                  <TagFilter
+                    tags={allTags}
+                    selected={selectedTags}
+                    onToggle={handleTagToggle}
+                    onClear={() => setSelectedTags([])}
+                  />
+                ) : (
+                  <span aria-hidden="true" />
+                )}
+
+                {showEmptyTrash ? (
+                  <button
+                    type="button"
+                    onClick={confirmEmptyTrash}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-soft px-app-sm py-1.5 text-label uppercase tracking-wide font-medium text-text-muted hover:text-text hover:border-border-strong transition-colors"
+                  >
+                    <TrashIcon size={14} />
+                    Empty Trash
+                  </button>
+                ) : null}
+              </div>
 
               {visibleCount > 0 ? (
                 <NoteList
@@ -256,7 +303,7 @@ export default function App() {
                   onUnarchive={unarchiveNote}
                   onTrash={trashNote}
                   onRestore={restoreNote}
-                  onDeleteForever={(note) => permanentlyDeleteNote(note.id)}
+                  onDeleteForever={confirmPermanentDelete}
                 />
               ) : isFilteredMiss ? (
                 <EmptyState
@@ -321,10 +368,20 @@ export default function App() {
           onUnarchive={unarchiveNote}
           onTrash={handleEditorTrash}
           onRestore={restoreNote}
-          onDeleteForever={handleEditorDeleteForever}
+          onDeleteForever={confirmPermanentDelete}
           onExportTxt={exportNoteAsTxt}
         />
       ) : null}
+
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.title}
+        description={confirm.description}
+        confirmLabel={confirm.confirmLabel}
+        cancelLabel={confirm.cancelLabel}
+        onConfirm={confirm.onConfirm}
+        onCancel={closeConfirm}
+      />
     </div>
   );
 }
