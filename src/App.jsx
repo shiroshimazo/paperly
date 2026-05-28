@@ -15,6 +15,7 @@ import NoteEditor from "./components/NoteEditor";
 import NoteList from "./components/NoteList";
 import Sidebar from "./components/Sidebar";
 import SortMenu from "./components/SortMenu";
+import Splash from "./components/Splash";
 import TagFilter from "./components/TagFilter";
 import Toast from "./components/Toast";
 import Topbar from "./components/Topbar";
@@ -73,6 +74,7 @@ const EMPTY_BY_SECTION = {
 
 const NO_CONFIRM = { open: false };
 const NO_TOAST = { open: false };
+const SPLASH_MIN_MS = 700;
 
 export default function App() {
   const [theme, setTheme] = useLocalStorage(THEME_KEY, getInitialTheme);
@@ -85,6 +87,7 @@ export default function App() {
   const [openId, setOpenId] = useState(null);
   const [confirm, setConfirm] = useState(NO_CONFIRM);
   const [toast, setToast] = useState(NO_TOAST);
+  const [booted, setBooted] = useState(false);
 
   const {
     notes,
@@ -107,6 +110,25 @@ export default function App() {
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
   }, [theme]);
+
+  // Boot splash: hold until web fonts settle and a minimum dwell elapses, so
+  // the brand mark gets a beat to land instead of flashing past.
+  useEffect(() => {
+    let cancelled = false;
+    const start = performance.now();
+    const fontsReady = document.fonts?.ready ?? Promise.resolve();
+    fontsReady.finally(() => {
+      const elapsed = performance.now() - start;
+      const wait = Math.max(0, SPLASH_MIN_MS - elapsed);
+      const id = setTimeout(() => {
+        if (!cancelled) setBooted(true);
+      }, wait);
+      return () => clearTimeout(id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onThemeToggle = useCallback(() => {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
@@ -445,6 +467,8 @@ export default function App() {
         tone={toast.tone}
         onDismiss={closeToast}
       />
+
+      <AnimatePresence>{!booted ? <Splash key="splash" /> : null}</AnimatePresence>
     </div>
   );
 }

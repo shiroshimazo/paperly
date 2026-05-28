@@ -16,6 +16,7 @@ import { COLOR_LABELS, countText, deriveTitle, slugify } from "../utils/noteUtil
 import { formatDateTime, formatRelative } from "../utils/dateUtils";
 import { renderMarkdown } from "../utils/markdown";
 import { useDebouncedEffect } from "../hooks/useDebouncedEffect";
+import { Swirling } from "./Swirling";
 
 const AUTOSAVE_MS = 350;
 
@@ -417,13 +418,17 @@ function SaveIndicator({ savedFlash, savedAt }) {
       }
       aria-live="polite"
     >
-      <span
-        aria-hidden="true"
-        className={
-          "inline-block h-1.5 w-1.5 rounded-full transition-colors duration-150 " +
-          (savedFlash ? "bg-text" : "bg-border-strong")
-        }
-      />
+      {savedFlash ? (
+        <Swirling
+          className="size-3 text-text"
+          style={{ "--duration": "0.9s" }}
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="inline-block h-1.5 w-1.5 rounded-full bg-border-strong transition-colors duration-150"
+        />
+      )}
       {savedFlash ? "Saving…" : `Saved ${formatRelative(savedAt)}`}
     </span>
   );

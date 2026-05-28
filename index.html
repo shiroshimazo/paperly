@@ -28,9 +28,84 @@
     />
 
     <title>Paperly — your notes, your way</title>
+
+    <style>
+      /* Boot splash — painted before React mounts.
+         Lives inside #root so React's first render replaces it. */
+      .boot-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #ffffff;
+        color: #0a0a0a;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .dark .boot-splash {
+        background: #0a0a0a;
+        color: #fafafa;
+      }
+      .boot-splash svg {
+        width: 48px;
+        height: 48px;
+      }
+      .boot-splash circle {
+        transform-origin: center;
+        animation:
+          boot-dash 1.1s ease-in-out infinite,
+          boot-spin calc(1.1s * 1.333333) linear infinite;
+      }
+      .boot-splash-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .boot-splash-brand {
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .boot-splash-tag {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.5;
+      }
+      @keyframes boot-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes boot-dash {
+        0%   { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }
+        50%  { stroke-dasharray: 90, 200; stroke-dashoffset: -35; }
+        100% { stroke-dasharray: 90, 200; stroke-dashoffset: -125; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-splash circle { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-splash" role="status" aria-label="Loading Paperly">
+        <svg viewBox="0 0 800 800" aria-hidden="true">
+          <circle
+            cx="400" cy="400" r="200"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="50"
+          />
+        </svg>
+        <div class="boot-splash-label">
+          <span class="boot-splash-brand">Paperly</span>
+          <span class="boot-splash-tag">Loading your notebook</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
