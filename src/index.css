@@ -149,6 +149,77 @@
     background: var(--color-text-muted);
   }
 
+  /* Markdown preview */
+  .md-preview h1,
+  .md-preview h2,
+  .md-preview h3,
+  .md-preview h4,
+  .md-preview h5,
+  .md-preview h6 {
+    color: var(--color-text);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 1.4em 0 0.5em;
+  }
+  .md-preview h1 { font-size: 1.75rem; }
+  .md-preview h2 { font-size: 1.4rem; }
+  .md-preview h3 { font-size: 1.15rem; }
+  .md-preview h4 { font-size: 1rem; }
+  .md-preview p {
+    margin: 0.5em 0;
+    color: var(--color-text);
+  }
+  .md-preview a {
+    color: var(--color-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .md-preview a:hover { text-decoration-thickness: 2px; }
+  .md-preview ul,
+  .md-preview ol {
+    padding-left: 1.4em;
+    margin: 0.5em 0;
+  }
+  .md-preview ul { list-style: disc; }
+  .md-preview ol { list-style: decimal; }
+  .md-preview li { margin: 0.25em 0; }
+  .md-preview blockquote {
+    border-left: 2px solid var(--color-border-strong);
+    padding-left: 0.85em;
+    margin: 0.75em 0;
+    color: var(--color-text-muted);
+  }
+  .md-preview hr {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    margin: 1.25em 0;
+  }
+  .md-preview .md-code {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.1em 0.35em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em;
+  }
+  .md-preview .md-pre {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.85em 1em;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin: 0.75em 0;
+  }
+  .md-preview .md-empty {
+    color: var(--color-text-subtle);
+    font-style: italic;
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     *,

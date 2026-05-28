@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import EmptyState from "./components/EmptyState";
+import NoteEditor from "./components/NoteEditor";
 import NoteList from "./components/NoteList";
 import Sidebar from "./components/Sidebar";
 import SortMenu from "./components/SortMenu";
@@ -26,6 +27,7 @@ import {
   searchNotes,
   sortNotes,
 } from "./utils/noteUtils";
+import { exportNoteAsTxt } from "./utils/fileUtils";
 
 const THEME_KEY = "paperly_theme";
 const VIEW_KEY = "paperly_view";
@@ -68,10 +70,12 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openId, setOpenId] = useState(null);
 
   const {
     notes,
     addNote,
+    updateNote,
     togglePin,
     toggleFavorite,
     archiveNote,
@@ -126,10 +130,22 @@ export default function App() {
 
   const visibleCount = visibleNotes.length;
 
+  // Find the open note (live reference so toolbar reflects pin/favorite changes).
+  const openNote = useMemo(
+    () => (openId ? notes.find((n) => n.id === openId) || null : null),
+    [openId, notes],
+  );
+
+  // If the open note vanishes (permanent delete elsewhere), close the editor.
+  useEffect(() => {
+    if (openId && !openNote) setOpenId(null);
+  }, [openId, openNote]);
+
   const handleCreate = useCallback(() => {
-    addNote({});
+    const note = addNote({});
     setSection(SECTIONS.ALL);
     setSidebarOpen(false);
+    setOpenId(note.id);
   }, [addNote]);
 
   const handleSectionChange = useCallback((next) => {
@@ -144,16 +160,52 @@ export default function App() {
     );
   }, []);
 
-  // Open is wired in Task 6 (NoteEditor). For now, stub it.
-  const handleOpen = useCallback(() => {
-    /* editor lands in Task 6 */
+  const handleOpen = useCallback((note) => {
+    setOpenId(note.id);
   }, []);
+
+  const handleCloseEditor = useCallback(() => setOpenId(null), []);
+
+  // Trash from inside the editor → close editor.
+  const handleEditorTrash = useCallback(
+    (note) => {
+      trashNote(note.id);
+      setOpenId(null);
+    },
+    [trashNote],
+  );
+
+  // Hard delete from editor → close.
+  const handleEditorDeleteForever = useCallback(
+    (note) => {
+      permanentlyDeleteNote(note.id);
+      setOpenId(null);
+    },
+    [permanentlyDeleteNote],
+  );
+
+  // Global Ctrl/Cmd+N → new note. We don't preventDefault unless we own
+  // the result, since the browser may reserve Ctrl+N for new windows;
+  // we register it but only act when the editor isn't capturing input.
+  useEffect(() => {
+    function onKey(e) {
+      const meta = e.ctrlKey || e.metaKey;
+      if (!meta) return;
+      if (e.key.toLowerCase() === "n" && !e.shiftKey && !e.altKey) {
+        // Browser captures Ctrl+N at the chrome level on most platforms,
+        // so we also bind Ctrl+Alt+N as a guaranteed shortcut.
+        e.preventDefault();
+        handleCreate();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleCreate]);
 
   const sectionEmpty = EMPTY_BY_SECTION[section];
   const hasActiveFilters = query.trim().length > 0 || selectedTags.length > 0;
   const isFilteredMiss = visibleCount === 0 && hasActiveFilters;
-  const showTagFilter =
-    allTags.length > 0 && section !== SECTIONS.TRASH;
+  const showTagFilter = allTags.length > 0 && section !== SECTIONS.TRASH;
 
   return (
     <div className="min-h-dvh bg-bg text-text font-sans">
@@ -257,6 +309,22 @@ export default function App() {
           </main>
         </div>
       </div>
+
+      {openNote ? (
+        <NoteEditor
+          note={openNote}
+          onChange={updateNote}
+          onClose={handleCloseEditor}
+          onTogglePin={togglePin}
+          onToggleFavorite={toggleFavorite}
+          onArchive={archiveNote}
+          onUnarchive={unarchiveNote}
+          onTrash={handleEditorTrash}
+          onRestore={restoreNote}
+          onDeleteForever={handleEditorDeleteForever}
+          onExportTxt={exportNoteAsTxt}
+        />
+      ) : null}
     </div>
   );
 }
