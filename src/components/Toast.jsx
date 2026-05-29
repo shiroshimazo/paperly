@@ -12,14 +12,17 @@ export default function Toast({
   open,
   message,
   tone = "info",
-  duration = 4000,
+  duration,
+  action,
   onDismiss,
 }) {
+  // Actionable toasts (e.g. Undo) need a longer reach window than plain ones.
+  const dwell = duration ?? (action ? 7000 : 4000);
   useEffect(() => {
     if (!open) return;
-    const id = setTimeout(() => onDismiss?.(), duration);
+    const id = setTimeout(() => onDismiss?.(), dwell);
     return () => clearTimeout(id);
-  }, [open, duration, onDismiss]);
+  }, [open, dwell, onDismiss]);
 
   const accent =
     tone === "danger"
@@ -53,6 +56,18 @@ export default function Toast({
             style={{ backgroundColor: accent }}
           />
           <p className="flex-1 text-[0.9rem] leading-snug text-text">{message}</p>
+          {action ? (
+            <button
+              type="button"
+              onClick={() => {
+                action.onAction?.();
+                onDismiss?.();
+              }}
+              className="shrink-0 rounded-sm px-2 py-1 text-label font-medium uppercase tracking-wide text-text hover:bg-bg-soft transition-colors"
+            >
+              {action.label}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onDismiss}

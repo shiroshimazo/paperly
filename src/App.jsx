@@ -207,8 +207,8 @@ export default function App() {
   const closeConfirm = useCallback(() => setConfirm(NO_CONFIRM), []);
   const closeToast = useCallback(() => setToast(NO_TOAST), []);
 
-  const showToast = useCallback((message, tone = "info") => {
-    setToast({ open: true, message, tone });
+  const showToast = useCallback((message, tone = "info", action = null, duration) => {
+    setToast({ open: true, message, tone, action, duration });
   }, []);
 
   // Permanent-delete confirmation flow — used by both the card and the editor.
@@ -249,13 +249,46 @@ export default function App() {
     });
   }, [counts, emptyTrash, closeConfirm, showToast]);
 
-  // Trash from inside the editor → close editor.
+  // Trash with an Undo affordance. Capture isPinned first — trashNote clears it,
+  // so a faithful undo has to put it back.
+  const handleTrash = useCallback(
+    (id) => {
+      const note = notes.find((n) => n.id === id);
+      if (!note) return;
+      const wasPinned = note.isPinned;
+      trashNote(id);
+      showToast("Note moved to Trash.", "info", {
+        label: "Undo",
+        onAction: () =>
+          updateNote(id, { isDeleted: false, isPinned: wasPinned }),
+      });
+    },
+    [notes, trashNote, updateNote, showToast],
+  );
+
+  // Archive with an Undo affordance — same pin-preservation concern as trash.
+  const handleArchive = useCallback(
+    (id) => {
+      const note = notes.find((n) => n.id === id);
+      if (!note) return;
+      const wasPinned = note.isPinned;
+      archiveNote(id);
+      showToast("Note archived.", "info", {
+        label: "Undo",
+        onAction: () =>
+          updateNote(id, { isArchived: false, isPinned: wasPinned }),
+      });
+    },
+    [notes, archiveNote, updateNote, showToast],
+  );
+
+  // Trash from inside the editor → close editor, but keep the Undo toast.
   const handleEditorTrash = useCallback(
     (note) => {
-      trashNote(note.id);
+      handleTrash(note.id);
       setOpenId(null);
     },
-    [trashNote],
+    [handleTrash],
   );
 
   // Export everything (including archived + trashed) so import is fully round-trippable.
@@ -374,9 +407,9 @@ export default function App() {
                   onOpen={handleOpen}
                   onTogglePin={togglePin}
                   onToggleFavorite={toggleFavorite}
-                  onArchive={archiveNote}
+                  onArchive={handleArchive}
                   onUnarchive={unarchiveNote}
-                  onTrash={trashNote}
+                  onTrash={handleTrash}
                   onRestore={restoreNote}
                   onDeleteForever={confirmPermanentDelete}
                 />
@@ -441,7 +474,7 @@ export default function App() {
             onClose={handleCloseEditor}
             onTogglePin={togglePin}
             onToggleFavorite={toggleFavorite}
-            onArchive={archiveNote}
+            onArchive={handleArchive}
             onUnarchive={unarchiveNote}
             onTrash={handleEditorTrash}
             onRestore={restoreNote}
@@ -465,6 +498,8 @@ export default function App() {
         open={toast.open}
         message={toast.message}
         tone={toast.tone}
+        action={toast.action}
+        duration={toast.duration}
         onDismiss={closeToast}
       />
 
