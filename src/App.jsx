@@ -36,6 +36,7 @@ import {
 } from "./utils/noteUtils";
 import {
   exportNoteAsTxt,
+  exportNoteAsMarkdown,
   exportNotesAsJson,
   pickJsonFile,
 } from "./utils/fileUtils";
@@ -93,6 +94,7 @@ export default function App() {
   const {
     notes,
     addNote,
+    duplicateNote,
     updateNote,
     togglePin,
     toggleFavorite,
@@ -194,6 +196,19 @@ export default function App() {
     setSidebarOpen(false);
     setOpenId(note.id);
   }, [addNote]);
+
+  // Duplicate → land on the fresh copy in All Notes and open it. Like
+  // handleCreate, opening the editor is the feedback, so no toast.
+  const handleDuplicate = useCallback(
+    (id) => {
+      const copy = duplicateNote(id);
+      if (!copy) return;
+      setSection(SECTIONS.ALL);
+      setSidebarOpen(false);
+      setOpenId(copy.id);
+    },
+    [duplicateNote],
+  );
 
   const handleSectionChange = useCallback((next) => {
     setSection(next);
@@ -465,6 +480,7 @@ export default function App() {
                   onUnarchive={unarchiveNote}
                   onTrash={handleTrash}
                   onRestore={restoreNote}
+                  onDuplicate={handleDuplicate}
                   onDeleteForever={confirmPermanentDelete}
                 />
               ) : isFilteredMiss ? (
@@ -534,6 +550,7 @@ export default function App() {
             onRestore={restoreNote}
             onDeleteForever={confirmPermanentDelete}
             onExportTxt={exportNoteAsTxt}
+            onExportMd={exportNoteAsMarkdown}
           />
         ) : null}
       </AnimatePresence>

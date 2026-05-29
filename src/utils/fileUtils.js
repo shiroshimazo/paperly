@@ -27,6 +27,23 @@ export function exportNoteAsTxt(note) {
   downloadBlob(blob, `${slugify(title)}.txt`);
 }
 
+/**
+ * Export a single note as Markdown. The body is already markdown, so it's
+ * emitted as-is. A "# Title" heading is added only when the note has an
+ * explicit title — otherwise deriveTitle would echo the body's first line and
+ * duplicate it. Tags use #hashtag syntax for portability to other md tools.
+ */
+export function exportNoteAsMarkdown(note) {
+  const explicitTitle = (note.title || "").trim();
+  const parts = [];
+  if (explicitTitle) parts.push(`# ${explicitTitle}`);
+  if (note.tags?.length) parts.push(note.tags.map((t) => `#${t}`).join(" "));
+  if (note.content) parts.push(note.content);
+  const text = parts.join("\n\n").replace(/\n*$/, "\n");
+  const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+  downloadBlob(blob, `${slugify(deriveTitle(note))}.md`);
+}
+
 /** Export an array of notes as a JSON file (round-trippable via importNotes). */
 export function exportNotesAsJson(notes, filename = "paperly-notes.json") {
   const payload = {

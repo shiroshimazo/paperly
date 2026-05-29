@@ -20,6 +20,7 @@ export default function NoteList({
   onUnarchive,
   onTrash,
   onRestore,
+  onDuplicate,
   onDeleteForever,
 }) {
   if (!notes || notes.length === 0) return null;
@@ -53,6 +54,7 @@ export default function NoteList({
               onUnarchive={onUnarchive}
               onTrash={onTrash}
               onRestore={onRestore}
+              onDuplicate={onDuplicate}
               onDeleteForever={onDeleteForever}
             />
           </motion.li>

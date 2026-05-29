@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Archive,
+  Copy,
   MoreVertical,
   Pin,
   RotateCcw,
@@ -29,6 +30,7 @@ export default function NoteCard({
   onUnarchive,
   onTrash,
   onRestore,
+  onDuplicate,
   onDeleteForever,
 }) {
   const title = deriveTitle(note);
@@ -155,6 +157,7 @@ export default function NoteCard({
           onUnarchive={onUnarchive}
           onTrash={onTrash}
           onRestore={onRestore}
+          onDuplicate={onDuplicate}
           onDeleteForever={onDeleteForever}
         />
       </div>
@@ -172,6 +175,7 @@ function CardToolbar({
   onUnarchive,
   onTrash,
   onRestore,
+  onDuplicate,
   onDeleteForever,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -280,6 +284,15 @@ function CardToolbar({
             }
             onClick={(e) => e.stopPropagation()}
           >
+            <MenuItem
+              onSelect={() => {
+                setMenuOpen(false);
+                onDuplicate?.(note.id);
+              }}
+            >
+              <Copy size={14} strokeWidth={1.75} />
+              Duplicate
+            </MenuItem>
             {inArchive ? (
               <MenuItem
                 onSelect={() => {

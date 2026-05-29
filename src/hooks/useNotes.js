@@ -36,6 +36,31 @@ export function useNotes() {
     [setRawNotes],
   );
 
+  /**
+   * Duplicate a note as a fresh, active copy: new id and timestamps, all
+   * status flags reset (pin/favorite/archive/trash), only content/tags/color
+   * and a " (copy)" title carry over. Computes the copy synchronously from
+   * `notes` (not inside the updater) so the returned value isn't stale and the
+   * body is StrictMode-safe; the updater does only the pure prepend.
+   * Returns the new note, or null if the source id isn't found.
+   */
+  const duplicateNote = useCallback(
+    (id) => {
+      const source = notes.find((n) => n.id === id);
+      if (!source) return null;
+      const base = (source.title || "").trim();
+      const copy = createNote({
+        title: base ? `${base} (copy)` : "",
+        content: source.content,
+        tags: [...(source.tags || [])],
+        color: source.color,
+      });
+      setRawNotes((prev) => [copy, ...(Array.isArray(prev) ? prev : [])]);
+      return copy;
+    },
+    [notes, setRawNotes],
+  );
+
   const updateNote = useCallback(
     (id, patch) => {
       setRawNotes((prev) =>
@@ -156,6 +181,7 @@ export function useNotes() {
   return {
     notes,
     addNote,
+    duplicateNote,
     updateNote,
     replaceNote,
     trashNote,

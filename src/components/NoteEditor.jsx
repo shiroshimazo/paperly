@@ -4,6 +4,7 @@ import {
   Archive,
   ArrowLeft,
   Download,
+  FileText,
   Pin,
   RotateCcw,
   Sparkles,
@@ -44,6 +45,7 @@ export default function NoteEditor({
   onRestore,
   onDeleteForever,
   onExportTxt,
+  onExportMd,
 }) {
   // Local draft mirrors the note so typing is fluid.
   const [title, setTitle] = useState(note.title);
@@ -228,6 +230,10 @@ export default function NoteEditor({
 
               <ToolbarButton label="Export as .txt" onClick={() => onExportTxt?.(note)}>
                 <Download size={16} strokeWidth={1.75} />
+              </ToolbarButton>
+
+              <ToolbarButton label="Export as .md" onClick={() => onExportMd?.(note)}>
+                <FileText size={16} strokeWidth={1.75} />
               </ToolbarButton>
 
               <ToolbarButton
