@@ -12,6 +12,7 @@ export default function NoteList({
   notes,
   view = "grid",
   section,
+  query,
   onOpen,
   onTogglePin,
   onToggleFavorite,
@@ -44,6 +45,7 @@ export default function NoteList({
               note={note}
               view={view}
               section={section}
+              query={query}
               onOpen={onOpen}
               onTogglePin={onTogglePin}
               onToggleFavorite={onToggleFavorite}

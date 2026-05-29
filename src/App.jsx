@@ -432,6 +432,7 @@ export default function App() {
                   notes={visibleNotes}
                   view={view}
                   section={section}
+                  query={query}
                   onOpen={handleOpen}
                   onTogglePin={togglePin}
                   onToggleFavorite={toggleFavorite}

@@ -8,7 +8,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { COLOR_LABELS, SECTIONS, derivePreview, deriveTitle } from "../utils/noteUtils";
+import { COLOR_LABELS, SECTIONS, derivePreview, deriveTitle, highlightSegments } from "../utils/noteUtils";
 import { formatRelative } from "../utils/dateUtils";
 
 const COLOR_BY_ID = Object.fromEntries(COLOR_LABELS.map((c) => [c.id, c.swatch]));
@@ -21,6 +21,7 @@ export default function NoteCard({
   note,
   view = "grid",
   section = SECTIONS.ALL,
+  query = "",
   onOpen,
   onTogglePin,
   onToggleFavorite,
@@ -68,7 +69,7 @@ export default function NoteCard({
       >
         <div className="flex items-start gap-app-sm">
           <h3 className="flex-1 min-w-0 text-[1.02rem] font-semibold leading-snug text-text line-clamp-2">
-            {title}
+            <Highlight text={title} query={query} />
           </h3>
           {note.isPinned && !inTrash ? (
             <Pin
@@ -88,7 +89,7 @@ export default function NoteCard({
               (view === "list" ? "line-clamp-2" : "line-clamp-4")
             }
           >
-            {preview}
+            <Highlight text={preview} query={query} />
           </p>
         ) : (
           <p className="mt-app-sm text-[0.9rem] italic text-text-subtle">
@@ -301,6 +302,25 @@ function CardToolbar({
         ) : null}
       </AnimatePresence>
     </div>
+  );
+}
+
+/**
+ * Highlight — renders `text` with case-insensitive matches of `query` wrapped
+ * in <mark>. Uses the pure highlightSegments helper; segments are plain strings
+ * so React escapes them — no HTML injection risk from note content or query.
+ */
+function Highlight({ text, query }) {
+  if (!query || !query.trim() || !text) return text || null;
+  const segments = highlightSegments(text, query);
+  return segments.map((seg, i) =>
+    seg.match ? (
+      <mark key={i} className="bg-mark-highlight text-text rounded-[1px]">
+        {seg.text}
+      </mark>
+    ) : (
+      <span key={i}>{seg.text}</span>
+    ),
   );
 }
 

@@ -149,6 +149,36 @@ export function filterByTags(notes, tags) {
   );
 }
 
+/** Escape a string for safe use inside a RegExp. */
+export function escapeRegExp(input) {
+  return (input || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Split `text` into segments around case-insensitive matches of `query`.
+ * Returns [{ text, match }] so a renderer can wrap matches without building
+ * HTML (keeps it React-safe and testable). Empty query → single non-match
+ * segment. No match → single non-match segment.
+ */
+export function highlightSegments(text, query) {
+  const src = text || "";
+  const q = (query || "").trim();
+  if (!q) return src ? [{ text: src, match: false }] : [];
+  const re = new RegExp(escapeRegExp(q), "ig");
+  const segments = [];
+  let last = 0;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    if (m.index > last) segments.push({ text: src.slice(last, m.index), match: false });
+    segments.push({ text: m[0], match: true });
+    last = m.index + m[0].length;
+    // Guard against zero-length matches looping forever.
+    if (m.index === re.lastIndex) re.lastIndex++;
+  }
+  if (last < src.length) segments.push({ text: src.slice(last), match: false });
+  return segments;
+}
+
 /** Sort notes — pinned-first ordering applied separately. */
 export function sortNotes(notes, sort) {
   const arr = [...notes];
