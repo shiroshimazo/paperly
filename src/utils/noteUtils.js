@@ -137,6 +137,67 @@ export function derivePreview(note, max = 180) {
   return body.length > max ? `${body.slice(0, max)}…` : body;
 }
 
+/**
+ * Split a wikilink's inner text into { target, alias }.
+ * "[[Foo]]" → { target: "Foo", alias: null }
+ * "[[Foo|see Foo]]" → { target: "Foo", alias: "see Foo" }
+ */
+export function parseWikilinkTarget(raw) {
+  const inner = (raw || "").trim();
+  const pipe = inner.indexOf("|");
+  if (pipe === -1) return { target: inner, alias: null };
+  return {
+    target: inner.slice(0, pipe).trim(),
+    alias: inner.slice(pipe + 1).trim() || null,
+  };
+}
+
+/**
+ * Build a lookup from normalized (lowercased) title → note id for resolving
+ * wikilinks. Trashed notes are excluded (you shouldn't link into Trash). On
+ * duplicate titles the first wins, matching the visible note order.
+ */
+export function buildTitleIndex(notes) {
+  const index = new Map();
+  for (const n of Array.isArray(notes) ? notes : []) {
+    if (n.isDeleted) continue;
+    const key = deriveTitle(n).toLowerCase();
+    if (!index.has(key)) index.set(key, n.id);
+  }
+  return index;
+}
+
+/** Resolve a wikilink target (plain, unescaped) to a note id, or null. */
+export function resolveWikilink(target, titleIndex) {
+  const key = (target || "").trim().toLowerCase();
+  if (!key || !titleIndex) return null;
+  return titleIndex.get(key) || null;
+}
+
+/** Every wikilink target referenced in a note's content (aliases stripped). */
+export function extractWikilinkTargets(content) {
+  const out = [];
+  const re = /\[\[([^\]]+)\]\]/g;
+  let m;
+  while ((m = re.exec(content || "")) !== null) {
+    const { target } = parseWikilinkTarget(m[1]);
+    if (target) out.push(target);
+  }
+  return out;
+}
+
+/** Notes whose content links to `note` by title (its backlinks). */
+export function findBacklinks(note, notes) {
+  if (!note) return [];
+  const targetKey = deriveTitle(note).toLowerCase();
+  return (Array.isArray(notes) ? notes : []).filter((n) => {
+    if (n.id === note.id || n.isDeleted) return false;
+    return extractWikilinkTargets(n.content).some(
+      (t) => t.toLowerCase() === targetKey,
+    );
+  });
+}
+
 /** Filter notes by section. */
 export function filterBySection(notes, section) {
   switch (section) {

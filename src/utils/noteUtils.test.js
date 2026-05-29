@@ -21,6 +21,11 @@ import {
   highlightSegments,
   daysUntilPurge,
   purgeExpiredTrash,
+  parseWikilinkTarget,
+  buildTitleIndex,
+  resolveWikilink,
+  extractWikilinkTargets,
+  findBacklinks,
 } from "./noteUtils";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -397,5 +402,81 @@ describe("purgeExpiredTrash", () => {
   });
   it("tolerates non-array input", () => {
     expect(purgeExpiredTrash(null, NOW)).toEqual([]);
+  });
+});
+
+describe("parseWikilinkTarget", () => {
+  it("parses a plain target", () => {
+    expect(parseWikilinkTarget("Foo Bar")).toEqual({ target: "Foo Bar", alias: null });
+  });
+  it("parses target|alias", () => {
+    expect(parseWikilinkTarget("Foo|see Foo")).toEqual({ target: "Foo", alias: "see Foo" });
+  });
+  it("trims both sides", () => {
+    expect(parseWikilinkTarget("  Foo  |  bar  ")).toEqual({ target: "Foo", alias: "bar" });
+  });
+  it("treats an empty alias as null", () => {
+    expect(parseWikilinkTarget("Foo|")).toEqual({ target: "Foo", alias: null });
+  });
+});
+
+describe("buildTitleIndex / resolveWikilink", () => {
+  const notes = [
+    note({ id: "a", title: "Project Alpha" }),
+    note({ id: "b", title: "Meeting Notes" }),
+    note({ id: "dupe", title: "Project Alpha" }),
+    note({ id: "trashed", title: "Gone", isDeleted: true }),
+  ];
+  const index = buildTitleIndex(notes);
+
+  it("resolves case-insensitively", () => {
+    expect(resolveWikilink("project alpha", index)).toBe("a");
+    expect(resolveWikilink("MEETING NOTES", index)).toBe("b");
+  });
+  it("first wins on duplicate titles", () => {
+    expect(resolveWikilink("Project Alpha", index)).toBe("a");
+  });
+  it("excludes trashed notes", () => {
+    expect(resolveWikilink("Gone", index)).toBeNull();
+  });
+  it("returns null for unknown / empty targets", () => {
+    expect(resolveWikilink("Nope", index)).toBeNull();
+    expect(resolveWikilink("", index)).toBeNull();
+  });
+});
+
+describe("extractWikilinkTargets", () => {
+  it("pulls every target, stripping aliases", () => {
+    const content = "See [[Alpha]] and [[Beta|the beta note]]. Also [[Alpha]] again.";
+    expect(extractWikilinkTargets(content)).toEqual(["Alpha", "Beta", "Alpha"]);
+  });
+  it("returns empty for no links", () => {
+    expect(extractWikilinkTargets("plain text")).toEqual([]);
+    expect(extractWikilinkTargets("")).toEqual([]);
+  });
+});
+
+describe("findBacklinks", () => {
+  // The target itself contains [[Hub]] — it must not appear in its own
+  // backlinks (excluded by id, the real self-reference guard).
+  const target = note({ id: "t", title: "Hub", content: "I also reference [[Hub]]" });
+  const notes = [
+    target,
+    note({ id: "x", title: "A", content: "links to [[Hub]] here" }),
+    note({ id: "y", title: "B", content: "and [[hub|the hub]] cased" }),
+    note({ id: "z", title: "C", content: "no links" }),
+    note({ id: "del", title: "D", content: "[[Hub]]", isDeleted: true }),
+  ];
+  it("finds notes linking by title, case-insensitively", () => {
+    const ids = findBacklinks(target, notes).map((n) => n.id);
+    expect(ids).toEqual(["x", "y"]);
+  });
+  it("excludes the note itself (by id) and trashed notes", () => {
+    const ids = findBacklinks(target, notes).map((n) => n.id);
+    expect(ids).not.toContain("t");
+    expect(ids).not.toContain("del");
+  });
+  it("returns empty for a null note", () => {
+    expect(findBacklinks(null, notes)).toEqual([]);
   });
 });

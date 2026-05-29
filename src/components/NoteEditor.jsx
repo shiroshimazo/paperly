@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Download,
   FileText,
+  Link as LinkIcon,
   Pin,
   RotateCcw,
   Sparkles,
@@ -13,7 +14,15 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { COLOR_LABELS, countText, deriveTitle, slugify } from "../utils/noteUtils";
+import {
+  COLOR_LABELS,
+  buildTitleIndex,
+  countText,
+  deriveTitle,
+  findBacklinks,
+  resolveWikilink,
+  slugify,
+} from "../utils/noteUtils";
 import { formatDateTime, formatRelative } from "../utils/dateUtils";
 import { renderMarkdown } from "../utils/markdown";
 import { useDebouncedEffect } from "../hooks/useDebouncedEffect";
@@ -35,6 +44,7 @@ const AUTOSAVE_MS = 350;
  */
 export default function NoteEditor({
   note,
+  notes,
   onChange,
   onClose,
   onTogglePin,
@@ -46,6 +56,7 @@ export default function NoteEditor({
   onDeleteForever,
   onExportTxt,
   onExportMd,
+  onOpenNote,
 }) {
   // Local draft mirrors the note so typing is fluid.
   const [title, setTitle] = useState(note.title);
@@ -128,7 +139,25 @@ export default function NoteEditor({
   const inTrash = !!note.isDeleted;
   const inArchive = !!note.isArchived;
   const stats = useMemo(() => countText(content), [content]);
-  const previewHtml = useMemo(() => renderMarkdown(content), [content]);
+
+  // Wikilink resolution: build a title→id index from the other notes, then a
+  // resolver the renderer calls per [[link]]. Memoized on the notes list.
+  const titleIndex = useMemo(() => buildTitleIndex(notes || []), [notes]);
+  const resolve = useMemo(
+    () => (target) => resolveWikilink(target, titleIndex),
+    [titleIndex],
+  );
+  const previewHtml = useMemo(
+    () => renderMarkdown(content, resolve),
+    [content, resolve],
+  );
+
+  // Backlinks: notes whose content links to this one by title. Uses the
+  // committed `note.content` of others (live as the parent re-renders).
+  const backlinks = useMemo(
+    () => findBacklinks(note, notes || []),
+    [note, notes],
+  );
 
   function commitTagDraft() {
     const next = tagDraft.trim().replace(/^#+/, "");
@@ -381,6 +410,24 @@ export default function NoteEditor({
           {showPreview ? (
             <article
               className="md-preview text-[1rem] leading-relaxed text-text"
+              // Event delegation: wikilink anchors carry data-note-id; clicking
+              // or Enter/Space on one opens that note. Lets the string renderer
+              // stay string-based while React owns navigation.
+              onClick={(e) => {
+                const el = e.target.closest?.("a.md-wikilink[data-note-id]");
+                if (el) {
+                  e.preventDefault();
+                  onOpenNote?.(el.getAttribute("data-note-id"));
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                const el = e.target.closest?.("a.md-wikilink[data-note-id]");
+                if (el) {
+                  e.preventDefault();
+                  onOpenNote?.(el.getAttribute("data-note-id"));
+                }
+              }}
               // renderMarkdown escapes HTML before producing safe markup.
               dangerouslySetInnerHTML={{ __html: previewHtml || placeholderPreview() }}
             />
@@ -399,6 +446,36 @@ export default function NoteEditor({
               }
             />
           )}
+
+          {/* Backlinks — notes that link here via [[wikilink]] */}
+          {!inTrash && backlinks.length > 0 ? (
+            <section
+              aria-label="Linked from"
+              className="mt-app-md border-t border-border pt-app-md"
+            >
+              <h2 className="flex items-center gap-1.5 text-label uppercase tracking-wider text-text-subtle">
+                <LinkIcon size={12} strokeWidth={1.75} />
+                Linked from
+                <span className="tabular-nums">({backlinks.length})</span>
+              </h2>
+              <ul className="mt-app-sm flex flex-col gap-1">
+                {backlinks.map((b) => (
+                  <li key={b.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenNote?.(b.id)}
+                      className={
+                        "w-full truncate rounded-md px-2 py-1.5 text-left text-[0.9rem] " +
+                        "text-text-muted hover:text-text hover:bg-bg-soft transition-colors"
+                      }
+                    >
+                      {deriveTitle(b)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
       </div>
     </motion.div>

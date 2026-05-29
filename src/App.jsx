@@ -540,6 +540,7 @@ export default function App() {
           <NoteEditor
             key={openNote.id}
             note={openNote}
+            notes={notes}
             onChange={updateNote}
             onClose={handleCloseEditor}
             onTogglePin={togglePin}
@@ -551,6 +552,7 @@ export default function App() {
             onDeleteForever={confirmPermanentDelete}
             onExportTxt={exportNoteAsTxt}
             onExportMd={exportNoteAsMarkdown}
+            onOpenNote={setOpenId}
           />
         ) : null}
       </AnimatePresence>
