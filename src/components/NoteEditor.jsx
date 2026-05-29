@@ -16,6 +16,7 @@ import { COLOR_LABELS, countText, deriveTitle, slugify } from "../utils/noteUtil
 import { formatDateTime, formatRelative } from "../utils/dateUtils";
 import { renderMarkdown } from "../utils/markdown";
 import { useDebouncedEffect } from "../hooks/useDebouncedEffect";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import { Swirling } from "./Swirling";
 
 const AUTOSAVE_MS = 350;
@@ -55,6 +56,12 @@ export default function NoteEditor({
 
   const lastSavedAt = useRef(note.updatedAt);
   const [, forceTick] = useState(0);
+
+  // Focus trap: confine Tab within the editor overlay and restore focus to
+  // whatever was focused (the card) when it closes. The title is focused first.
+  const containerRef = useRef(null);
+  const titleRef = useRef(null);
+  useFocusTrap(containerRef, true, { initialFocus: titleRef });
 
   // Re-hydrate when switching to a different note.
   const idRef = useRef(note.id);
@@ -138,12 +145,14 @@ export default function NoteEditor({
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0, scale: 0.985 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.99 }}
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="fixed inset-0 z-40 flex flex-col bg-bg"
       role="dialog"
+      aria-modal="true"
       aria-label="Note editor"
     >
       {/* Editor header */}
@@ -251,6 +260,7 @@ export default function NoteEditor({
         <div className="mx-auto flex max-w-3xl flex-col gap-app-md px-app-md py-app-lg">
           {/* Title */}
           <input
+            ref={titleRef}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}

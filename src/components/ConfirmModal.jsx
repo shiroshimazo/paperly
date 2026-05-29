@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 /**
  * ConfirmModal — accessible confirmation dialog for destructive actions.
@@ -21,38 +22,30 @@ export default function ConfirmModal({
   onCancel,
 }) {
   const primaryRef = useRef(null);
-  const previousActive = useRef(null);
+  const containerRef = useRef(null);
+
+  // Focus trap + restoration is owned by the hook (cycles through Cancel and
+  // the primary action, restoring focus to the trigger on close). The effect
+  // below keeps only Escape-to-cancel and background scroll locking.
+  useFocusTrap(containerRef, open, { initialFocus: primaryRef });
 
   useEffect(() => {
     if (!open) return;
-    previousActive.current = document.activeElement;
-    // Defer to next frame so the dialog is mounted and focusable.
-    const id = requestAnimationFrame(() => primaryRef.current?.focus());
 
     function onKey(e) {
       if (e.key === "Escape") {
         e.stopPropagation();
         onCancel?.();
-      } else if (e.key === "Tab") {
-        // Tiny focus trap: keep focus on the primary action.
-        e.preventDefault();
-        primaryRef.current?.focus();
       }
     }
     document.addEventListener("keydown", onKey);
 
-    // Lock background scroll while open.
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     return () => {
-      cancelAnimationFrame(id);
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
-      const target = previousActive.current;
-      if (target && typeof target.focus === "function") {
-        target.focus();
-      }
     };
   }, [open, onCancel]);
 
@@ -84,6 +77,7 @@ export default function ConfirmModal({
           />
 
           <motion.div
+            ref={containerRef}
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 4 }}
