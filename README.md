@@ -1,193 +1,141 @@
 # Paperly
 
-A local-only notes app. Everything lives in your browser — no signup, no cloud, no server.
+**A calm, local-first place to think and write.**
 
-Built with React 19, Vite, Tailwind v4, framer-motion, and lucide-react.
+Paperly is a notes app that lives entirely in your browser. There's no signup, no cloud, no server — every note stays on your device. Open it, write, and close the tab; your notes are still there when you come back. It's fast, works offline, and gets out of your way.
 
-## Quick start
+---
+
+## Why Paperly
+
+Most notes apps want an account, a subscription, and a network connection. Paperly wants none of that. It's built around three ideas:
+
+- **Yours, on your device.** Notes are saved to your browser's local storage. Nothing leaves your machine unless you explicitly export it.
+- **Calm by design.** A quiet monochrome interface, smooth animations, and a focused editor that keeps the writing front and center.
+- **Works offline.** Install it like an app and it runs without a connection — your notebook is always available.
+
+---
+
+## Features
+
+### Writing
+- **Markdown editor** with a live preview toggle — headings, **bold**, *italic*, `inline code`, code blocks, quotes, lists, and horizontal rules.
+- **Task lists** — write `- [ ]` and `- [x]` to render real checkboxes. Lists can mix tasks and plain bullets.
+- **Wikilinks** — type `[[Note Title]]` to link notes together. Resolved links are clickable; use `[[Title|alias]]` for custom link text. Each note shows a **"Linked from"** panel listing every note that links to it (backlinks).
+- **Autosave** — your draft is committed as you type. `Ctrl/Cmd + S` forces an immediate save out of muscle memory.
+- **Live stats** — word and character counts update as you write.
+
+### Organizing
+- **Sections** — All Notes, Pinned, Favorites, Archived, and Trash, each with live counts.
+- **Pin & favorite** — keep important notes at the top or in a dedicated list.
+- **Tags** — tag notes (`#personal`, `#work`) and filter by one or more tag chips.
+- **Color labels** — mark notes with a color stripe (slate, rose, amber, emerald, sky, violet).
+- **Sort** — by last updated, date created, or title (ascending or descending).
+- **Search** — instant search across titles, content, and tags, with matches **highlighted** right in the cards.
+- **Grid or list view** — switch layouts to suit how you browse.
+
+### Safety & recovery
+- **Undo** — trashing or archiving a note shows a toast with an Undo button that restores it, pin state and all.
+- **Soft delete** — deleted notes go to Trash first, where you can restore them.
+- **Auto-purge** — notes in Trash are permanently removed after 30 days. Each trashed card shows a "Purges in N days" countdown so nothing disappears as a surprise.
+- **Confirm prompts** — permanent deletes and "Empty Trash" ask before they act.
+
+### Getting data in and out
+- **Duplicate** a note into a fresh, editable copy.
+- **Export a single note** as `.txt` or `.md` (Markdown).
+- **Export everything** as a JSON file (`Sidebar → Export`) — including archived and trashed notes, so it round-trips perfectly.
+- **Import** a Paperly JSON export or a plain array of notes. Imports merge by note ID, keeping whichever copy was edited more recently.
+
+### Comfort
+- **Light & dark themes** — follows your system preference by default, remembers your choice, and never flashes the wrong theme on load.
+- **Installable (PWA)** — install Paperly to your home screen or desktop and run it offline like a native app.
+- **Accessible** — keyboard-navigable, focus is trapped inside dialogs and restored when they close, and interactive elements are labeled for screen readers.
+
+---
+
+## How to use it
+
+1. **Create a note** — click *New note* (or press `Ctrl/Cmd + N`). The editor opens immediately.
+2. **Write** — type in Markdown. Toggle *Preview* to see it rendered. Add tags and a color from the editor.
+3. **Link notes** — reference another note with `[[Its Title]]`. Click the link in Preview to jump there.
+4. **Organize** — pin, favorite, tag, or archive from any note's card menu or the editor toolbar.
+5. **Find things** — press `/` or `Ctrl/Cmd + K` to jump to search. Matches are highlighted as you type.
+6. **Recover mistakes** — deleted something? Hit *Undo* on the toast, or restore it from Trash.
+7. **Back up** — export to JSON from the sidebar anytime. Import it on another device or browser to move your notes.
+
+### Keyboard shortcuts
+
+| Shortcut            | Action                          |
+|---------------------|---------------------------------|
+| `Ctrl/Cmd + N`      | New note                        |
+| `Ctrl/Cmd + K` or `/` | Focus search                  |
+| `Ctrl/Cmd + S`      | Force save (in editor)          |
+| `Esc`               | Close editor / dismiss dialog   |
+
+---
+
+## Your data & privacy
+
+Paperly stores everything in your browser's `localStorage` — it never sends your notes anywhere. That means:
+
+- **Private by default.** No account, no telemetry, no network calls for your content.
+- **Tied to the browser.** Notes live in the browser profile you wrote them in. To move them, use Export → Import.
+- **Back up occasionally.** Clearing your browser data will remove your notes, so export a JSON copy if they matter to you.
+
+---
+
+## Run it locally
+
+Paperly is a React + Vite app. You'll need [Node.js](https://nodejs.org).
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # start the dev server → http://localhost:5173
 npm run build    # production build → dist/
-npm run preview  # serve the built bundle
-npm run lint
+npm run preview  # serve the built bundle locally
+npm run test     # run the test suite
+npm run lint     # lint the codebase
 ```
 
-## What's inside
+To try the installable/offline experience, run `npm run build` then `npm run preview` — the service worker is active in production builds.
 
-- **State** — `useNotes` hook over `useLocalStorage`. All CRUD is immutable, persisted to `localStorage` under `digital_notes`.
-- **Pure layer** — `src/utils/noteUtils.js` holds filter/sort/search/parse helpers with no React or DOM. Easy to test, easy to reuse.
-- **Browser layer** — `src/utils/fileUtils.js` handles Blob downloads and the JSON file picker.
-- **UI** — section-based navigation (All / Pinned / Favorites / Archived / Trash) with grid/list view, tag chips, sort menu, and a focused editor with autosave + markdown preview.
+---
+
+## Tech stack
+
+- **[React 19](https://react.dev)** with the React Compiler
+- **[Vite](https://vite.dev)** for dev server and bundling
+- **[Tailwind CSS v4](https://tailwindcss.com)** for styling
+- **[framer-motion](https://www.framer.com/motion/)** for animations
+- **[lucide-react](https://lucide.dev)** for icons
+- **[Vitest](https://vitest.dev)** for tests
+
+No backend, no database, no external state — just the browser.
+
+---
 
 ## Project structure
 
 ```
 src/
-├── App.jsx                    Top-level state, routing-by-section, keyboard shortcuts
-├── components/
-│   ├── Sidebar.jsx            Section nav, new-note CTA, export/import
-│   ├── Topbar.jsx             Search, view toggle, theme toggle
-│   ├── NoteList.jsx           Grid / list container with layout animations
-│   ├── NoteCard.jsx           One note + toolbar + more-menu
-│   ├── NoteEditor.jsx         Full-screen editor with debounced autosave
-│   ├── ConfirmModal.jsx       Confirmation dialog for destructive actions
-│   ├── Toast.jsx              Auto-dismissing status banner
-│   ├── SearchBar.jsx          SortMenu, TagFilter, EmptyState, ThemeToggle
+├── App.jsx                    Top-level state, section routing, shortcuts, boot tasks
+├── components/                UI — Sidebar, Topbar, NoteList, NoteCard, NoteEditor,
+│                              ConfirmModal, Toast, SearchBar, SortMenu, TagFilter, …
 ├── hooks/
 │   ├── useNotes.js            CRUD over the persisted notes array
 │   ├── useLocalStorage.js     Stateful localStorage with cross-tab sync
-│   └── useDebouncedEffect.js  For autosave
+│   ├── useDebouncedEffect.js  Debounced autosave
+│   └── useFocusTrap.js        Trap + restore focus inside dialogs
 └── utils/
-    ├── noteUtils.js           Pure helpers (filter, sort, search, parse)
-    ├── fileUtils.js           Blob downloads, JSON file picking
-    ├── markdown.js            Tiny markdown renderer for the preview pane
-    └── dateUtils.js           formatRelative, formatDateTime
+    ├── noteUtils.js           Pure helpers — filter, sort, search, wikilinks, purge
+    ├── fileUtils.js           Blob downloads, JSON/txt/md export, file picking
+    ├── markdown.js            Dependency-free Markdown renderer for the preview
+    └── dateUtils.js           Relative & absolute date formatting
 ```
 
-## Icons (lucide-react)
+The logic worth testing lives in `src/utils/noteUtils.js` and `markdown.js` — both are pure (no React, no DOM) and covered by the Vitest suite.
 
-All icons come from [`lucide-react`](https://lucide.dev). Import only what you use — they tree-shake.
-
-```jsx
-import { Pin, Star, Trash2 } from "lucide-react";
-
-<Pin size={16} strokeWidth={1.75} />
-```
-
-**Conventions used in this project:**
-
-- `size={N}` — match the visual weight of nearby text. Common sizes: `12`, `14`, `15`, `16`, `18`, `22`.
-- `strokeWidth={1.75}` — slightly chunkier than lucide's default (`2`). Apply consistently.
-- `fill="currentColor"` — for filled variants of toggleable icons (e.g. an active `Pin` or `Star`). Use the same icon, not a separate `*Filled` import.
-
-```jsx
-<Pin
-  size={15}
-  strokeWidth={1.75}
-  fill={note.isPinned ? "currentColor" : "none"}
-/>
-```
-
-**Color** — icons inherit `currentColor`, so set color via Tailwind on the parent (`text-text-muted`, `text-text-subtle`, etc).
-
-**Adding a new icon** — pick from [lucide.dev/icons](https://lucide.dev/icons), import by PascalCase name, follow the size/stroke conventions above.
-
-## Animations (framer-motion)
-
-framer-motion drives every overlay, dropdown, and list reorder. The CSS keyframes were removed.
-
-**Standard easing:** `[0.22, 1, 0.36, 1]` (a soft-out cubic). Use this for any in/out transition unless there's a reason not to.
-
-**Standard durations:** `0.14`–`0.22` seconds. Anything longer feels sluggish for utility UI.
-
-### Pattern: conditional mount with enter/exit
-
-Wrap conditional content in `AnimatePresence` so exit animations run before unmount:
-
-```jsx
-import { AnimatePresence, motion } from "framer-motion";
-
-<AnimatePresence>
-  {open ? (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-    >
-      …
-    </motion.div>
-  ) : null}
-</AnimatePresence>
-```
-
-Used by: `Toast`, `ConfirmModal`, `NoteEditor`, `NoteCard` more-menu, `SortMenu`, `Sidebar` mobile scrim.
-
-### Pattern: layout animations on lists
-
-When list order changes (sort change, pinning), `layout` makes items glide instead of jump:
-
-```jsx
-<AnimatePresence initial={false}>
-  {notes.map((note) => (
-    <motion.li
-      key={note.id}
-      layout
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-    >
-      …
-    </motion.li>
-  ))}
-</AnimatePresence>
-```
-
-Note: `display: contents` breaks `layout` (it removes the element from layout flow). Don't combine them.
-
-### Pattern: swap with origin direction
-
-For toggleable icon swaps (e.g. theme toggle), use `mode="wait"` and a key that changes:
-
-```jsx
-<AnimatePresence mode="wait" initial={false}>
-  <motion.span
-    key={isDark ? "sun" : "moon"}
-    initial={{ rotate: -90, opacity: 0, scale: 0.85 }}
-    animate={{ rotate: 0, opacity: 1, scale: 1 }}
-    exit={{ rotate: 90, opacity: 0, scale: 0.85 }}
-    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-  >
-    {isDark ? <Sun /> : <Moon />}
-  </motion.span>
-</AnimatePresence>
-```
-
-### Pattern: tap response
-
-For primary buttons that benefit from a press feel:
-
-```jsx
-<motion.button whileTap={{ scale: 0.98 }} transition={{ duration: 0.12 }}>
-  …
-</motion.button>
-```
-
-## Theming
-
-The `dark` class on `<html>` flips a set of CSS variables defined in `src/index.css`. The initial theme is set inline in `index.html` before paint to avoid a flash. `ThemeToggle` writes to `localStorage` under `paperly_theme`.
-
-Color tokens you'll use most:
-
-| Variable           | Purpose                              |
-|--------------------|--------------------------------------|
-| `--color-text`     | Primary foreground                   |
-| `--color-text-muted` | Secondary foreground               |
-| `--color-text-subtle` | Tertiary / placeholder            |
-| `--color-bg`       | Page background                      |
-| `--color-bg-soft`  | Hover / nested surface               |
-| `--color-card`     | Card / dialog surface                |
-| `--color-border`   | Default border                       |
-| `--color-overlay`  | Modal scrim                          |
-
-Tailwind utilities map onto these (`bg-bg`, `text-text-muted`, `border-border`, etc.).
-
-## Keyboard shortcuts
-
-| Shortcut       | Action                          |
-|----------------|---------------------------------|
-| `Ctrl/Cmd + N` | New note                        |
-| `Ctrl/Cmd + S` | Force save (in editor)          |
-| `Esc`          | Close editor / dismiss dialog   |
-
-## Data
-
-- **Storage** — `localStorage`, key `digital_notes`. Notes are normalized on load to tolerate legacy or hand-edited JSON.
-- **Export** — Sidebar → Export. Writes a JSON envelope (`{ app, exportedAt, notes }`) with every note (including archived and trashed) so it round-trips cleanly.
-- **Import** — Sidebar → Import. Accepts the export shape or a bare `Note[]` array. Merges by `id`, keeping whichever copy has the newer `updatedAt`.
+---
 
 ## License
 
