@@ -10,4 +10,9 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
   ],
+  test: {
+    // noteUtils is pure (no DOM), so the lightweight node environment is enough.
+    environment: 'node',
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+  },
 })
