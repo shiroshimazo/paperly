@@ -4,6 +4,7 @@ import {
   createNote,
   normalizeNote,
   patchNote,
+  purgeExpiredTrash,
 } from "../utils/noteUtils";
 
 const STORAGE_KEY = "digital_notes";
@@ -83,6 +84,22 @@ export function useNotes() {
     );
   }, [setRawNotes]);
 
+  /**
+   * Drop trashed notes past the retention window. Computes synchronously from
+   * the already-normalized `notes` (so legacy trashed notes get the same
+   * deletedAt fallback as the rest of the app) and only writes when something
+   * is actually purged. Returns the number removed so the caller can surface it.
+   */
+  const purgeExpired = useCallback(
+    (now = Date.now()) => {
+      const kept = purgeExpiredTrash(notes, now);
+      const removed = notes.length - kept.length;
+      if (removed > 0) setRawNotes(kept);
+      return removed;
+    },
+    [notes, setRawNotes],
+  );
+
   const togglePin = useCallback(
     (id) => {
       setRawNotes((prev) =>
@@ -150,5 +167,6 @@ export function useNotes() {
     archiveNote,
     unarchiveNote,
     importNotes,
+    purgeExpired,
   };
 }

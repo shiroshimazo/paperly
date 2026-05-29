@@ -36,6 +36,10 @@ export const SORTS = {
   TITLE_DESC: "title-desc",
 };
 
+/** Trashed notes are permanently purged after this many days. */
+export const TRASH_RETENTION_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /** Crypto-safe ID with a graceful fallback. */
 export function makeId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -59,23 +63,44 @@ export function createNote(overrides = {}) {
     isDeleted: false,
     createdAt: now,
     updatedAt: now,
+    deletedAt: null,
     ...overrides,
   };
 }
 
-/** Patch a note immutably and bump updatedAt. */
+/**
+ * Patch a note immutably and bump updatedAt. Also manages deletedAt off the
+ * isDeleted transition so callers (trash / restore / undo) never have to stamp
+ * it themselves: set when entering Trash, cleared when leaving it, preserved
+ * (so the purge clock keeps running) while a note stays trashed.
+ */
 export function patchNote(note, patch) {
-  return {
+  const next = {
     ...note,
     ...patch,
     updatedAt: new Date().toISOString(),
   };
+  if (next.isDeleted && !note.isDeleted) {
+    next.deletedAt = next.updatedAt;
+  } else if (!next.isDeleted) {
+    next.deletedAt = null;
+  }
+  return next;
 }
 
 /** Normalize loaded notes — guard against legacy/missing fields. */
 export function normalizeNote(raw) {
   if (!raw || typeof raw !== "object") return null;
   const now = new Date().toISOString();
+  const isDeleted = Boolean(raw.isDeleted);
+  const updatedAt = raw.updatedAt || raw.createdAt || now;
+  // deletedAt anchors the purge clock. Legacy trashed notes (no field) fall
+  // back to updatedAt — trashing bumps updatedAt, so it's their trash time.
+  const deletedAt = isDeleted
+    ? typeof raw.deletedAt === "string" && raw.deletedAt
+      ? raw.deletedAt
+      : updatedAt
+    : null;
   return {
     id: typeof raw.id === "string" && raw.id ? raw.id : makeId(),
     title: typeof raw.title === "string" ? raw.title : "",
@@ -87,9 +112,10 @@ export function normalizeNote(raw) {
     isPinned: Boolean(raw.isPinned),
     isFavorite: Boolean(raw.isFavorite),
     isArchived: Boolean(raw.isArchived),
-    isDeleted: Boolean(raw.isDeleted),
+    isDeleted,
     createdAt: raw.createdAt || now,
-    updatedAt: raw.updatedAt || raw.createdAt || now,
+    updatedAt,
+    deletedAt,
   };
 }
 
@@ -126,6 +152,36 @@ export function filterBySection(notes, section) {
     default:
       return notes.filter((n) => !n.isArchived && !n.isDeleted);
   }
+}
+
+/**
+ * Whole days remaining before a trashed note is auto-purged.
+ * Returns null for notes that aren't trashed or lack a deletedAt anchor.
+ * `now` is injectable for testing; rounds up so "expires today" reads as 0.
+ */
+export function daysUntilPurge(note, now = Date.now()) {
+  if (!note?.isDeleted || !note.deletedAt) return null;
+  const deletedMs = new Date(note.deletedAt).getTime();
+  if (Number.isNaN(deletedMs)) return null;
+  const elapsed = (typeof now === "number" ? now : new Date(now).getTime()) - deletedMs;
+  const remaining = TRASH_RETENTION_DAYS * DAY_MS - elapsed;
+  return Math.max(0, Math.ceil(remaining / DAY_MS));
+}
+
+/**
+ * Drop trashed notes whose retention window has fully elapsed. Pure: returns a
+ * new array, leaving non-trashed notes and within-window trash untouched.
+ * Notes without a valid deletedAt are kept (no anchor → can't safely purge).
+ */
+export function purgeExpiredTrash(notes, now = Date.now()) {
+  const nowMs = typeof now === "number" ? now : new Date(now).getTime();
+  const cutoff = nowMs - TRASH_RETENTION_DAYS * DAY_MS;
+  return (Array.isArray(notes) ? notes : []).filter((n) => {
+    if (!n.isDeleted || !n.deletedAt) return true;
+    const deletedMs = new Date(n.deletedAt).getTime();
+    if (Number.isNaN(deletedMs)) return true;
+    return deletedMs > cutoff;
+  });
 }
 
 /** Search across title, content, and tags. Empty query is a passthrough. */

@@ -8,7 +8,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { COLOR_LABELS, SECTIONS, derivePreview, deriveTitle, highlightSegments } from "../utils/noteUtils";
+import { COLOR_LABELS, SECTIONS, TRASH_RETENTION_DAYS, daysUntilPurge, derivePreview, deriveTitle, highlightSegments } from "../utils/noteUtils";
 import { formatRelative } from "../utils/dateUtils";
 
 const COLOR_BY_ID = Object.fromEntries(COLOR_LABELS.map((c) => [c.id, c.swatch]));
@@ -36,6 +36,7 @@ export default function NoteCard({
   const colorSwatch = COLOR_BY_ID[note.color] || "transparent";
   const inTrash = section === SECTIONS.TRASH;
   const inArchive = section === SECTIONS.ARCHIVED;
+  const purgeIn = inTrash ? daysUntilPurge(note) : null;
 
   return (
     <article
@@ -124,13 +125,25 @@ export default function NoteCard({
           (view === "list" ? "md:mt-0 md:flex-col md:items-end md:justify-start md:min-w-[180px]" : "")
         }
       >
-        <time
-          className="text-label text-text-subtle tabular-nums"
-          dateTime={note.updatedAt}
-          title={new Date(note.updatedAt).toLocaleString()}
-        >
-          {formatRelative(note.updatedAt)}
-        </time>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <time
+            className="text-label text-text-subtle tabular-nums"
+            dateTime={note.updatedAt}
+            title={new Date(note.updatedAt).toLocaleString()}
+          >
+            {formatRelative(note.updatedAt)}
+          </time>
+          {purgeIn !== null ? (
+            <span
+              className="text-[11px] font-medium text-text-subtle"
+              title={`Auto-deleted ${TRASH_RETENTION_DAYS} days after being trashed`}
+            >
+              {purgeIn === 0
+                ? "Purges today"
+                : `Purges in ${purgeIn} ${purgeIn === 1 ? "day" : "days"}`}
+            </span>
+          ) : null}
+        </div>
 
         <CardToolbar
           note={note}

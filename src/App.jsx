@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import {
   Archive,
@@ -24,6 +24,7 @@ import { useNotes } from "./hooks/useNotes";
 import {
   SECTIONS,
   SORTS,
+  TRASH_RETENTION_DAYS,
   collectTags,
   deriveTitle,
   filterBySection,
@@ -102,6 +103,7 @@ export default function App() {
     permanentlyDeleteNote,
     emptyTrash,
     importNotes,
+    purgeExpired,
   } = useNotes();
 
   // Reflect theme on the documentElement so all CSS vars flip.
@@ -129,6 +131,13 @@ export default function App() {
       cancelled = true;
     };
   }, []);
+
+  // Trash auto-purge: on boot, drop notes that have sat in Trash past the
+  // retention window. Runs once (ref-guarded against StrictMode's double
+  // mount so the summary toast doesn't fire twice). purgeExpired is a no-op
+  // write when nothing has expired. Declared after showToast so it can
+  // reference it without a forward use.
+  const didPurge = useRef(false);
 
   const onThemeToggle = useCallback(() => {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
@@ -209,6 +218,22 @@ export default function App() {
 
   const showToast = useCallback((message, tone = "info", action = null, duration) => {
     setToast({ open: true, message, tone, action, duration });
+  }, []);
+
+  useEffect(() => {
+    if (didPurge.current) return;
+    didPurge.current = true;
+    const removed = purgeExpired();
+    if (removed > 0) {
+      // Intentional one-time boot notification after the purge write; the
+      // single cascading render the rule warns about is harmless here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      showToast(
+        `Cleared ${removed} ${removed === 1 ? "note" : "notes"} from Trash after ${TRASH_RETENTION_DAYS} days.`,
+      );
+    }
+    // Boot-only sweep — intentionally not re-run when its deps change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Permanent-delete confirmation flow — used by both the card and the editor.
