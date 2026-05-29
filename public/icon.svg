@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Paperly">
+  <!-- Full-bleed background; maskable shapes clip to this, content stays in the safe zone -->
+  <rect width="512" height="512" rx="104" fill="#000000"/>
+  <!-- Document mark, centered within the maskable safe zone (~center 80%) -->
+  <g fill="none" stroke="#ffffff" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M176 132 H300 L344 176 V372 a8 8 0 0 1-8 8 H176 a8 8 0 0 1-8-8 V140 a8 8 0 0 1 8-8 z"/>
+    <path d="M300 132 V176 H344"/>
+    <line x1="200" y1="236" x2="312" y2="236"/>
+    <line x1="200" y1="280" x2="312" y2="280"/>
+    <line x1="200" y1="324" x2="280" y2="324"/>
+  </g>
+</svg>
