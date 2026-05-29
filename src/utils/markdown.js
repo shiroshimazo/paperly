@@ -93,14 +93,30 @@ export function renderMarkdown(src) {
       continue;
     }
 
-    // Unordered list
+    // Unordered list — supports GitHub-style task items (- [ ] / - [x]).
+    // Detection is per-item so a list can mix checkboxes and plain bullets.
     if (/^\s*[-*+]\s+/.test(line)) {
       const items = [];
+      let hasTask = false;
       while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*[-*+]\s+/, ""));
+        const body = lines[i].replace(/^\s*[-*+]\s+/, "");
+        const task = /^\[([ xX])\]\s*(.*)$/.exec(body);
+        if (task) {
+          hasTask = true;
+          const checked = task[1] !== " ";
+          items.push(
+            `<li class="md-task">` +
+              `<input type="checkbox" disabled${checked ? " checked" : ""} />` +
+              `<span>${inline(task[2])}</span>` +
+              `</li>`,
+          );
+        } else {
+          items.push(`<li>${inline(body)}</li>`);
+        }
         i++;
       }
-      out.push(`<ul>${items.map((it) => `<li>${inline(it)}</li>`).join("")}</ul>`);
+      const cls = hasTask ? ' class="md-tasklist"' : "";
+      out.push(`<ul${cls}>${items.join("")}</ul>`);
       continue;
     }
 

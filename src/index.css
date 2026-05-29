@@ -185,6 +185,20 @@
   .md-preview ul { list-style: disc; }
   .md-preview ol { list-style: decimal; }
   .md-preview li { margin: 0.25em 0; }
+  .md-preview ul.md-tasklist {
+    list-style: none;
+    padding-left: 0.1em;
+  }
+  .md-preview li.md-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  .md-preview li.md-task input[type="checkbox"] {
+    margin-top: 0.3em;
+    flex-shrink: 0;
+    accent-color: var(--color-text);
+  }
   .md-preview blockquote {
     border-left: 2px solid var(--color-border-strong);
     padding-left: 0.85em;
