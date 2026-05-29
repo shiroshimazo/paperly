@@ -324,19 +324,47 @@ export default function App() {
     }
   }, [importNotes, showToast]);
 
-  // Global Ctrl/Cmd+N → new note.
+  // Global shortcuts: Ctrl/Cmd+N → new note, Ctrl/Cmd+K or "/" → focus search.
   useEffect(() => {
+    function isTypingTarget(el) {
+      if (!el) return false;
+      return (
+        el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.isContentEditable
+      );
+    }
+    function focusSearch() {
+      const input = document.getElementById("topbar-search");
+      if (input) {
+        input.focus();
+        input.select?.();
+      }
+    }
     function onKey(e) {
       const meta = e.ctrlKey || e.metaKey;
-      if (!meta) return;
-      if (e.key.toLowerCase() === "n" && !e.shiftKey && !e.altKey) {
+      if (meta && e.key.toLowerCase() === "n" && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         handleCreate();
+        return;
+      }
+      // Ctrl/Cmd+K → focus search (skip while the editor covers it).
+      if (meta && e.key.toLowerCase() === "k" && !e.shiftKey && !e.altKey) {
+        if (openId) return;
+        e.preventDefault();
+        focusSearch();
+        return;
+      }
+      // "/" → focus search, but only when not already typing into a field.
+      if (e.key === "/" && !meta && !e.altKey && !isTypingTarget(e.target)) {
+        if (openId) return;
+        e.preventDefault();
+        focusSearch();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handleCreate]);
+  }, [handleCreate, openId]);
 
   const sectionEmpty = EMPTY_BY_SECTION[section];
   const hasActiveFilters = query.trim().length > 0 || selectedTags.length > 0;

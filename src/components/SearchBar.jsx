@@ -30,7 +30,7 @@ export default function SearchBar({
         autoComplete="off"
         spellCheck={false}
         className={
-          "w-full h-9 pl-9 pr-9 rounded-md border border-border " +
+          "peer w-full h-9 pl-9 pr-9 rounded-md border border-border " +
           "bg-bg-soft text-[0.92rem] placeholder:text-text-subtle " +
           "focus:bg-bg focus:border-border-strong focus:outline-none " +
           "transition-colors duration-150"
@@ -45,7 +45,19 @@ export default function SearchBar({
         >
           <X size={14} strokeWidth={1.75} />
         </button>
-      ) : null}
+      ) : (
+        <kbd
+          aria-hidden="true"
+          className={
+            "pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 " +
+            "hidden sm:inline-flex h-5 min-w-[1.25rem] items-center justify-center " +
+            "rounded border border-border bg-bg px-1 text-[11px] font-medium " +
+            "text-text-subtle peer-focus:opacity-0"
+          }
+        >
+          /
+        </kbd>
+      )}
     </div>
   );
 }
